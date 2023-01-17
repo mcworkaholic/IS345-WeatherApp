@@ -7,13 +7,15 @@ namespace Project_2
     public partial class WeatherForm : Form
 
     {
-
+        Control[] controls;
         public WeatherForm()
         {
             InitializeComponent();
-            KeyPreview = true;
+            // Array of all controls whose visibility is toggled in the form on data load and reset
+            controls = new Control[] { addButton, searchTextBox, clearButton, refreshBox, highButton, lowButton,
+            pictureBox1, bulkInsertButton, resetButton, editButton, removeButton};
         }
-        // GLOBALS
+        // GLOBALS, to be altered by the application
         string dbFile;
         SQLiteConnection con;
         DialogResult dialogFileConfirm;
@@ -33,8 +35,6 @@ namespace Project_2
          "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM",
          "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX",
          "UT", "VA", "VT", "WA", "WI", "WV", "WY"};
-
-        // Array of all components whose visibility needs to be toggled on file load and form reset
 
         private string selectedFile;
         private void cityTextBox_TextChanged(object sender, EventArgs e)
@@ -63,37 +63,24 @@ namespace Project_2
         // Empties the textboxes where the user adds information in the upper left hand corner of the form
         private void EmptyTextBoxes()
         {
-            cityTextBox.Text = "";
-            stateBox.Text = "";
-            tempTextBox.Text = "";
+            cityTextBox.Text = string.Empty;
+            stateBox.Text = string.Empty;
+            tempTextBox.Text = string.Empty;
         }
         private void EnableAll()
         {
-            // Make all buttons visible and set to enabled
-            addButton.Visible = true;
-            clearButton.Visible = true;
-            refreshBox.Enabled = true;
-            refreshBox.Visible = true;
-            highButton.Visible = true;
-            highButton.Enabled = true;
-            lowButton.Visible = true;
-            lowButton.Enabled = true;
-            pictureBox1.Enabled = true;
-            pictureBox1.Visible = true;
-            bulkInsertButton.Visible = true;
-            resetButton.Visible = true;
-            editButton.Enabled = true;
-            editButton.Visible = true;
-            removeButton.Enabled = true;
-            removeButton.Visible = true;
-            wiTextBox.Enabled = true;
-            mnTextBox.Enabled = true;
-            ndTextBox.Enabled = true;
-            sdTextBox.Enabled = true;
-            iaTextBox.Enabled = true;
-            regionTextBox.Enabled = true;
+            startGroupBox.Visible = false;
+            blankBox.Visible = false;
+            noDataLabel.Visible = false;
 
-            // FOR LOOP to add each state to the box
+            // Make all buttons visible and set to enabled
+            foreach (Control c in controls)
+            {
+                c.Visible = true;
+                c.Enabled = true;
+            }
+
+            // FOR LOOP to add each state to the Combobox
             for (int i = 0; i < states.Length; i++)
             {
                 stateBox.Items.Add(states[i]);
@@ -130,12 +117,12 @@ namespace Project_2
         }
         /* The function AVGTextboxes takes in two parameters, an array of TextBox objects and an array of strings (queries). 
          * The purpose of this function is to update the text of the TextBox objects 
-         * with the result of the corresponding queries.
+         * with the result of the corresponding queries (AVGs).
          */
         private void AVGTextboxes(TextBox[] textboxes, string[] queries)
         {
             /* Determining the file path of the database to be used, 
-             * either the default "weather.db" or a newly created file if the newButtonPressed flag is set.
+             * either the default "weather.db" provided with the application or a newly created file if the newButtonPressed flag is set.
              */
             string workingDirectory = Environment.CurrentDirectory;
             string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName;
@@ -167,7 +154,7 @@ namespace Project_2
                         }
                         else
                         {
-                            textboxes[i].Text = "";
+                            textboxes[i].Text = string.Empty;
                         }
                     }
                 }
@@ -349,8 +336,8 @@ namespace Project_2
                 e.Handled = true;
             }
         }
-        // Homemade refresh button 1, refreshes datagrid to original state
-        private void pictureBox1_Click(object sender, EventArgs e)
+        // Homemade refresh button 2, refreshes datagrid to original state
+        private void refreshBox2_Click(object sender, EventArgs e)
         {
             if (!newButtonPressed)
             {
@@ -365,7 +352,7 @@ namespace Project_2
 
         }
         // Homemade refresh button 2, refreshes datagrid to original state
-        private void pictureBox1_Click_1(object sender, EventArgs e)
+        private void refreshBox1_Click(object sender, EventArgs e)
         {
             if (!newButtonPressed)
             {
@@ -387,7 +374,7 @@ namespace Project_2
             // Change the text of the Edit button to "Save"
             editButton.Text = "Save";
 
-            // Add a click event handler to the Save button to handle saving the changes
+            // Add a click event handler to the Save button to handle saving the changes, and remove the editbuttonclick event handler
             editButton.Click -= editButton_Click;
             editButton.Click += saveButton_Click;
 
@@ -409,7 +396,7 @@ namespace Project_2
             // Change the text of the Save button back to "Edit"
             editButton.Text = "Edit";
 
-            // Remove the click event handler for the Save button
+            // Remove the click event handler for the Save button, add the editbutton click event handler
             editButton.Click -= saveButton_Click;
             editButton.Click += editButton_Click;
 
@@ -569,42 +556,33 @@ namespace Project_2
 
             newButtonPressed = false;
 
+            // Upper left-hand textboxes
             EmptyTextBoxes();
 
             // Empty the average temp textboxes for state and region
-            wiTextBox.Text = "";
-            iaTextBox.Text = "";
-            sdTextBox.Text = "";
-            ndTextBox.Text = "";
-            mnTextBox.Text = "";
-            regionTextBox.Text = "";
+            wiTextBox.Text = String.Empty;
+            iaTextBox.Text = String.Empty;
+            sdTextBox.Text = String.Empty;
+            ndTextBox.Text = String.Empty;
+            mnTextBox.Text = String.Empty;
+            regionTextBox.Text = String.Empty;
 
-            // Make an array of these so I can loop through them here and in EnableAll()
-            addButton.Visible = false;
-            clearButton.Visible = false;
-            refreshBox.Enabled = false;
-            refreshBox.Visible = false;
-            highButton.Visible = false;
-            highButton.Enabled = false;
-            lowButton.Visible = false;
-            lowButton.Enabled = false;
-            pictureBox1.Enabled = false;
-            pictureBox1.Visible = false;
-            bulkInsertButton.Visible = false;
-            resetButton.Visible = false;
-            editButton.Enabled = false;
-            editButton.Visible = false;
-            removeButton.Enabled = false;
-            removeButton.Visible = false;
-            wiTextBox.Enabled = false;
-            mnTextBox.Enabled = false;
-            ndTextBox.Enabled = false;
-            sdTextBox.Enabled = false;
-            iaTextBox.Enabled = false;
-            regionTextBox.Enabled = false;
+            // display over datagrid, add start groupbox
+            startGroupBox.Visible = true;
+            blankBox.Visible = true;
+            noDataLabel.Visible = true;
 
+            // Disable all buttons in the array and remove visibility
+            foreach (Control c in controls)
+            {
+                c.Visible = false;
+                c.Enabled = false;
+            }
+            // Clear statebox combobox
             stateBox.Items.Clear();
         }
+
+        
     }
 }
 

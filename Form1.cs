@@ -11,9 +11,9 @@ namespace Project_2
         public WeatherForm()
         {
             InitializeComponent();
-            // Array of all controls whose visibility is toggled in the form on data load and reset
-            controls = new Control[] { addButton, searchTextBox, clearButton, refreshBox, highButton, lowButton,
-            pictureBox1, bulkInsertButton, resetButton, editButton, removeButton};
+            // Array of all controls whose visibility is toggled in the form on data load and form reset
+            controls = new Control[] { addButton, searchTextBox, clearButton, refreshBox2, highButton, lowButton,
+            refreshBox1, bulkInsertButton, resetButton, editButton, removeButton};
         }
         // GLOBALS, to be altered by the application
         string dbFile;
@@ -27,7 +27,12 @@ namespace Project_2
         private bool newButtonPressed = false;
 
         // Queries for the avg textboxes
-        string[] queries = { "SELECT AVG(temp) FROM weather WHERE state = 'WI';", "SELECT AVG(temp) FROM weather WHERE state = 'IA';", "SELECT AVG(temp) FROM weather WHERE state = 'SD';", "SELECT AVG(temp) FROM weather WHERE state = 'ND';", "SELECT AVG(temp) FROM weather WHERE state = 'MN';", "SELECT AVG(temp) FROM weather;" };
+        string[] queries = { "SELECT AVG(temp) FROM weather WHERE state = 'WI';", 
+            "SELECT AVG(temp) FROM weather WHERE state = 'IA';", 
+            "SELECT AVG(temp) FROM weather WHERE state = 'SD';", 
+            "SELECT AVG(temp) FROM weather WHERE state = 'ND';", 
+            "SELECT AVG(temp) FROM weather WHERE state = 'MN';", 
+            "SELECT AVG(temp) FROM weather;" };
 
         // Array of all state abbreviations for the state combobox
         string[] states = {"AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA",
@@ -67,6 +72,11 @@ namespace Project_2
             stateBox.Text = string.Empty;
             tempTextBox.Text = string.Empty;
         }
+        private void ReloadAVGTextBoxes()
+        {
+            TextBox[] textboxes = { wiTextBox, iaTextBox, sdTextBox, ndTextBox, mnTextBox, regionTextBox };
+            AVGTextboxes(textboxes, queries);
+        }
         private void EnableAll()
         {
             startGroupBox.Visible = false;
@@ -86,7 +96,6 @@ namespace Project_2
                 stateBox.Items.Add(states[i]);
             }
         }
-
 
         // Loads data from the selected file into the dataGridView.
         private void LoadData(string selectedFile)
@@ -186,7 +195,7 @@ namespace Project_2
             openFileDialog.RestoreDirectory = true;
 
             // Check if the refreshBox has not been enabled yet
-            if (refreshBox.Enabled != true)
+            if (refreshBox2.Enabled != true)
             {
                 // Show the OpenFileDialog and check if the user clicks the OK button
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
@@ -202,8 +211,7 @@ namespace Project_2
 
                         // Call the LoadData function and pass in the selectedFile variable as an argument
                         LoadData(selectedFile);
-                        TextBox[] textboxes = { wiTextBox, iaTextBox, sdTextBox, ndTextBox, mnTextBox, regionTextBox };
-                        AVGTextboxes(textboxes, queries);
+                        ReloadAVGTextBoxes();
                     }
                     else if (dialogFileConfirm != DialogResult.Cancel)
                     {
@@ -271,10 +279,7 @@ namespace Project_2
                         LoadData(selectedFile);
                     }
                     EmptyTextBoxes();
-
-                    // create an array of textboxes to pass to the AVGTextboxes function
-                    TextBox[] textboxes = { wiTextBox, iaTextBox, sdTextBox, ndTextBox, mnTextBox, regionTextBox };
-                    AVGTextboxes(textboxes, queries);
+                    ReloadAVGTextBoxes();
                 }
             }
             catch (FormatException)
@@ -342,8 +347,7 @@ namespace Project_2
             if (!newButtonPressed)
             {
                 LoadData(selectedFile);
-                TextBox[] textboxes = { wiTextBox, iaTextBox, sdTextBox, ndTextBox, mnTextBox, regionTextBox };
-                AVGTextboxes(textboxes, queries);
+                ReloadAVGTextBoxes();
             }
             else if (newButtonPressed)
             {
@@ -357,8 +361,7 @@ namespace Project_2
             if (!newButtonPressed)
             {
                 LoadData(selectedFile);
-                TextBox[] textboxes = { wiTextBox, iaTextBox, sdTextBox, ndTextBox, mnTextBox, regionTextBox };
-                AVGTextboxes(textboxes, queries);
+                ReloadAVGTextBoxes();
             }
             else if (newButtonPressed)
             {
@@ -369,7 +372,6 @@ namespace Project_2
         {
             // Enable editing mode on the DataGridView
             dataGridView1.ReadOnly = false;
-
 
             // Change the text of the Edit button to "Save"
             editButton.Text = "Save";
@@ -390,8 +392,7 @@ namespace Project_2
 
             // Update the database with the changes made to the DataTable
             adapter.Update(datatable);
-            TextBox[] textboxes = { wiTextBox, iaTextBox, sdTextBox, ndTextBox, mnTextBox, regionTextBox };
-            AVGTextboxes(textboxes, queries);
+            ReloadAVGTextBoxes();
 
             // Change the text of the Save button back to "Edit"
             editButton.Text = "Edit";
@@ -452,8 +453,7 @@ namespace Project_2
                             adapter.DeleteCommand = cmd;
                             datatable.Rows[index].Delete();
                             adapter.Update(datatable);
-                            TextBox[] textboxes = { wiTextBox, iaTextBox, sdTextBox, ndTextBox, mnTextBox, regionTextBox };
-                            AVGTextboxes(textboxes, queries);
+                            ReloadAVGTextBoxes();
                         }
                         else
                         {
@@ -514,19 +514,16 @@ namespace Project_2
                 cmdCreate.ExecuteNonQuery();
                 con.Close();
 
-
                 EnableAll();
 
                 // Reload the data grid with the new .db file
                 LoadData(newDbFile);
-                TextBox[] textboxes = { wiTextBox, iaTextBox, sdTextBox, ndTextBox, mnTextBox, regionTextBox };
-                AVGTextboxes(textboxes, queries);
+                ReloadAVGTextBoxes();
             }
             else if (result == DialogResult.No)
             {
                 // Do not perform delete action
             }
-
         }
 
         private void bulkInsertButton_Click(object sender, EventArgs e)
@@ -581,8 +578,6 @@ namespace Project_2
             // Clear statebox combobox
             stateBox.Items.Clear();
         }
-
-        
     }
 }
 

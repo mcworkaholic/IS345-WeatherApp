@@ -39,12 +39,12 @@
             this.closeButton = new System.Windows.Forms.Button();
             this.weatherBox = new System.Windows.Forms.GroupBox();
             this.newButton = new System.Windows.Forms.Button();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.refreshBox1 = new System.Windows.Forms.PictureBox();
             this.sourceButton = new System.Windows.Forms.Button();
-            this.label4 = new System.Windows.Forms.Label();
-            this.label3 = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
-            this.label1 = new System.Windows.Forms.Label();
+            this.dateLabel = new System.Windows.Forms.Label();
+            this.tempLabel = new System.Windows.Forms.Label();
+            this.stateLabel = new System.Windows.Forms.Label();
+            this.cityLabel = new System.Windows.Forms.Label();
             this.clearButton = new System.Windows.Forms.Button();
             this.addButton = new System.Windows.Forms.Button();
             this.dateTimePicker1 = new System.Windows.Forms.DateTimePicker();
@@ -66,17 +66,18 @@
             this.ndLabel = new System.Windows.Forms.Label();
             this.mnLabel = new System.Windows.Forms.Label();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-            this.refreshBox = new System.Windows.Forms.PictureBox();
+            this.refreshBox2 = new System.Windows.Forms.PictureBox();
             this.resetButton = new System.Windows.Forms.Button();
             this.cancelButton = new System.Windows.Forms.Button();
             this.bulkInsertButton = new System.Windows.Forms.Button();
             this.blankBox = new System.Windows.Forms.PictureBox();
             this.noDataLabel = new System.Windows.Forms.Label();
+            this.copyRightLabel = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.weatherBox.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.refreshBox1)).BeginInit();
             this.tempBox.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.refreshBox)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.refreshBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.blankBox)).BeginInit();
             this.SuspendLayout();
             // 
@@ -166,12 +167,12 @@
             // weatherBox
             // 
             this.weatherBox.Controls.Add(this.newButton);
-            this.weatherBox.Controls.Add(this.pictureBox1);
+            this.weatherBox.Controls.Add(this.refreshBox1);
             this.weatherBox.Controls.Add(this.sourceButton);
-            this.weatherBox.Controls.Add(this.label4);
-            this.weatherBox.Controls.Add(this.label3);
-            this.weatherBox.Controls.Add(this.label2);
-            this.weatherBox.Controls.Add(this.label1);
+            this.weatherBox.Controls.Add(this.dateLabel);
+            this.weatherBox.Controls.Add(this.tempLabel);
+            this.weatherBox.Controls.Add(this.stateLabel);
+            this.weatherBox.Controls.Add(this.cityLabel);
             this.weatherBox.Controls.Add(this.clearButton);
             this.weatherBox.Controls.Add(this.addButton);
             this.weatherBox.Controls.Add(this.dateTimePicker1);
@@ -196,20 +197,20 @@
             this.newButton.UseVisualStyleBackColor = true;
             this.newButton.Click += new System.EventHandler(this.newButton_Click);
             // 
-            // pictureBox1
+            // refreshBox1
             // 
-            this.pictureBox1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.pictureBox1.Enabled = false;
-            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(267, 188);
-            this.pictureBox1.MaximumSize = new System.Drawing.Size(23, 23);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(20, 20);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pictureBox1.TabIndex = 12;
-            this.pictureBox1.TabStop = false;
-            this.pictureBox1.Visible = false;
-            this.pictureBox1.Click += new System.EventHandler(this.refreshBox1_Click);
+            this.refreshBox1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.refreshBox1.Enabled = false;
+            this.refreshBox1.Image = ((System.Drawing.Image)(resources.GetObject("refreshBox1.Image")));
+            this.refreshBox1.Location = new System.Drawing.Point(267, 188);
+            this.refreshBox1.MaximumSize = new System.Drawing.Size(23, 23);
+            this.refreshBox1.Name = "refreshBox1";
+            this.refreshBox1.Size = new System.Drawing.Size(20, 20);
+            this.refreshBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.refreshBox1.TabIndex = 12;
+            this.refreshBox1.TabStop = false;
+            this.refreshBox1.Visible = false;
+            this.refreshBox1.Click += new System.EventHandler(this.refreshBox1_Click);
             // 
             // sourceButton
             // 
@@ -221,41 +222,41 @@
             this.sourceButton.UseVisualStyleBackColor = true;
             this.sourceButton.Click += new System.EventHandler(this.SourceButton_Click);
             // 
-            // label4
+            // dateLabel
             // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(125, 149);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(31, 15);
-            this.label4.TabIndex = 17;
-            this.label4.Text = "Date";
+            this.dateLabel.AutoSize = true;
+            this.dateLabel.Location = new System.Drawing.Point(125, 149);
+            this.dateLabel.Name = "dateLabel";
+            this.dateLabel.Size = new System.Drawing.Size(31, 15);
+            this.dateLabel.TabIndex = 17;
+            this.dateLabel.Text = "Date";
             // 
-            // label3
+            // tempLabel
             // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(114, 106);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(71, 15);
-            this.label3.TabIndex = 16;
-            this.label3.Text = "Temp (in °F)";
+            this.tempLabel.AutoSize = true;
+            this.tempLabel.Location = new System.Drawing.Point(114, 106);
+            this.tempLabel.Name = "tempLabel";
+            this.tempLabel.Size = new System.Drawing.Size(71, 15);
+            this.tempLabel.TabIndex = 16;
+            this.tempLabel.Text = "Temp (in °F)";
             // 
-            // label2
+            // stateLabel
             // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(123, 66);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(33, 15);
-            this.label2.TabIndex = 15;
-            this.label2.Text = "State";
+            this.stateLabel.AutoSize = true;
+            this.stateLabel.Location = new System.Drawing.Point(123, 66);
+            this.stateLabel.Name = "stateLabel";
+            this.stateLabel.Size = new System.Drawing.Size(33, 15);
+            this.stateLabel.TabIndex = 15;
+            this.stateLabel.Text = "State";
             // 
-            // label1
+            // cityLabel
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(125, 25);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(28, 15);
-            this.label1.TabIndex = 14;
-            this.label1.Text = "City";
+            this.cityLabel.AutoSize = true;
+            this.cityLabel.Location = new System.Drawing.Point(125, 25);
+            this.cityLabel.Name = "cityLabel";
+            this.cityLabel.Size = new System.Drawing.Size(28, 15);
+            this.cityLabel.TabIndex = 14;
+            this.cityLabel.Text = "City";
             // 
             // clearButton
             // 
@@ -467,20 +468,20 @@
             this.mnLabel.TabIndex = 0;
             this.mnLabel.Text = "MN";
             // 
-            // refreshBox
+            // refreshBox2
             // 
-            this.refreshBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.refreshBox.Enabled = false;
-            this.refreshBox.Image = ((System.Drawing.Image)(resources.GetObject("refreshBox.Image")));
-            this.refreshBox.Location = new System.Drawing.Point(133, 469);
-            this.refreshBox.MaximumSize = new System.Drawing.Size(23, 23);
-            this.refreshBox.Name = "refreshBox";
-            this.refreshBox.Size = new System.Drawing.Size(20, 20);
-            this.refreshBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.refreshBox.TabIndex = 11;
-            this.refreshBox.TabStop = false;
-            this.refreshBox.Visible = false;
-            this.refreshBox.Click += new System.EventHandler(this.refreshBox2_Click);
+            this.refreshBox2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.refreshBox2.Enabled = false;
+            this.refreshBox2.Image = ((System.Drawing.Image)(resources.GetObject("refreshBox2.Image")));
+            this.refreshBox2.Location = new System.Drawing.Point(133, 469);
+            this.refreshBox2.MaximumSize = new System.Drawing.Size(23, 23);
+            this.refreshBox2.Name = "refreshBox2";
+            this.refreshBox2.Size = new System.Drawing.Size(20, 20);
+            this.refreshBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.refreshBox2.TabIndex = 11;
+            this.refreshBox2.TabStop = false;
+            this.refreshBox2.Visible = false;
+            this.refreshBox2.Click += new System.EventHandler(this.refreshBox2_Click);
             // 
             // resetButton
             // 
@@ -531,23 +532,34 @@
             // 
             this.noDataLabel.AutoSize = true;
             this.noDataLabel.BackColor = System.Drawing.SystemColors.Window;
-            this.noDataLabel.Location = new System.Drawing.Point(271, 334);
+            this.noDataLabel.Location = new System.Drawing.Point(271, 335);
             this.noDataLabel.Name = "noDataLabel";
             this.noDataLabel.Size = new System.Drawing.Size(50, 15);
             this.noDataLabel.TabIndex = 16;
             this.noDataLabel.Text = "No Data";
             // 
+            // copyRightLabel
+            // 
+            this.copyRightLabel.AutoSize = true;
+            this.copyRightLabel.Location = new System.Drawing.Point(203, 432);
+            this.copyRightLabel.Name = "copyRightLabel";
+            this.copyRightLabel.Size = new System.Drawing.Size(177, 15);
+            this.copyRightLabel.TabIndex = 17;
+            this.copyRightLabel.Text = "Copyright ©️ 2023 Weston Evans";
+            // 
             // WeatherForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(630, 521);
+            this.Controls.Add(this.copyRightLabel);
             this.Controls.Add(this.noDataLabel);
             this.Controls.Add(this.blankBox);
             this.Controls.Add(this.bulkInsertButton);
             this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.resetButton);
-            this.Controls.Add(this.refreshBox);
+            this.Controls.Add(this.refreshBox2);
             this.Controls.Add(this.tempBox);
             this.Controls.Add(this.weatherBox);
             this.Controls.Add(this.closeButton);
@@ -557,15 +569,16 @@
             this.Controls.Add(this.removeButton);
             this.Controls.Add(this.searchTextBox);
             this.Controls.Add(this.dataGridView1);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "WeatherForm";
-            this.Text = "Weather App ";
+            this.Text = "Weather Analysis V2.0";
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.weatherBox.ResumeLayout(false);
             this.weatherBox.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.refreshBox1)).EndInit();
             this.tempBox.ResumeLayout(false);
             this.tempBox.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.refreshBox)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.refreshBox2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.blankBox)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -585,18 +598,18 @@
         private DateTimePicker dateTimePicker1;
         private TextBox tempTextBox;
         private GroupBox tempBox;
-        private Label label4;
-        private Label label3;
-        private Label label2;
-        private Label label1;
+        private Label dateLabel;
+        private Label tempLabel;
+        private Label stateLabel;
+        private Label cityLabel;
         private Button clearButton;
         private Button addButton;
         private Button sourceButton;
         private TextBox cityTextBox;
         private ToolTip toolTip1;
         private ComboBox stateBox;
-        private PictureBox refreshBox;
-        private PictureBox pictureBox1;
+        private PictureBox refreshBox2;
+        private PictureBox refreshBox1;
         private Button newButton;
         private Label wiLabel;
         private Label iaLabel;
@@ -616,5 +629,6 @@
         private GroupBox startGroupBox;
         private PictureBox blankBox;
         private Label noDataLabel;
+        private Label copyRightLabel;
     }
 }

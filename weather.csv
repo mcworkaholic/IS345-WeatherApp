@@ -1,10 +1,9 @@
-weather_id,city,state,date,temp
-1,St. Cloud,MN,2009-09-18,82.91
-2,Fargo,ND,2008-01-02,-26.67
-3,New Hradec,ND,2009-04-15,47.54
-4,Sioux Falls,SD,2006-07-12,98.30
-5,Oshkosh,WI,2006-10-20,63.00
-6,Green Bay,WI,2004-12-21,-12.45
-7,Fort Dodge,IA,2006-07-07,101.23
-8,Moscow,ND,2010-01-20,-30.00
-9,,,,
+city,state,date,temp
+St. Cloud,MN,2009-09-18,82.91
+Fargo,ND,2008-01-02,-26.67
+New Hradec,ND,2009-04-15,47.54
+Sioux Falls,SD,2006-07-12,98.3
+Oshkosh,WI,2006-10-20,63
+Green Bay,WI,2004-12-21,-12.45
+Fort Dodge,IA,2006-07-07,101.23
+Moscow,ND,2010-01-20,-30

@@ -22,6 +22,7 @@ namespace Project_2
         SQLiteCommand cmd;
         string Query;
         string newDbFile;
+        string currentFile;
         DataTable datatable;
         SQLiteDataAdapter adapter;
         private bool newButtonPressed = false;
@@ -188,10 +189,9 @@ namespace Project_2
             string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName;
             openFileDialog.InitialDirectory = projectDirectory;
 
-            // Set the filter to only show .db files
-            openFileDialog.Filter = "DB files (*.db)|*.db|All files (*.*)|*.*";
+            // Set the filter to look for .db files
+            openFileDialog.Filter = "DB files (*.db)|*.db";
             openFileDialog.FilterIndex = 1;
-            openFileDialog.ValidateNames = true; // this line will exclude folders from being shown
             openFileDialog.RestoreDirectory = true;
 
             // Check if the refreshBox has not been enabled yet
@@ -333,7 +333,7 @@ namespace Project_2
             dataGridView1.DataSource = DV;
         }
         private void tempTextBox_KeyPress(object sender, KeyPressEventArgs e)
-        {   //what is allowed       //backspace  //dash    //period    //enter    //whitespace
+        {   //what is allowed       //backspace  //hyphen    //period    //enter    //whitespace
             string st = "0123456789" + (char)8 + (char)45 + (char)46 + (char)13 + (char)32;
             if (!st.Contains(e.KeyChar))
             {
@@ -525,10 +525,51 @@ namespace Project_2
                 // Do not perform delete action
             }
         }
-
-        private void bulkInsertButton_Click(object sender, EventArgs e)
+        // csvImport takes the current db file being displayed in the datagrid as an argument
+        private void csvImport(string currentFile)
         {
             // Import from CSV in Project folder and insert into current db/datagrid
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                string filePath = openFileDialog.FileName;
+
+                // Read the CSV file and insert the data into the SQLite database
+                using (SQLiteConnection con = new SQLiteConnection(@"data source =" + currentFile))
+                {
+                    con.Open();
+
+                    using (var reader = new StreamReader(filePath))
+                    {   
+                        // hacky way of skipping the first line
+                        reader.ReadLine();
+
+                        while (!reader.EndOfStream)
+                        {
+                            var line = reader.ReadLine();
+                            var values = line.Split(',');
+
+                            // Insert the data into the SQLite database
+                            Query = string.Format("INSERT INTO weather (city, state, date, temp) VALUES ('{0}', '{1}', '{2}', '{3}')", values[0], values[1], values[2], values[3]);
+                            cmd = new SQLiteCommand(Query, con);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    con.Close();
+                    LoadData(currentFile);
+                }
+            }
+        }
+        private void bulkInsertButton_Click(object sender, EventArgs e)
+        {
+            if (newButtonPressed == true)
+            {
+                csvImport(newDbFile);
+            }
+            else {
+                csvImport(selectedFile);
+            }
         }
 
         private void cancelButton_Click(object sender, EventArgs e)
@@ -546,11 +587,8 @@ namespace Project_2
         private void resetButton_Click(object sender, EventArgs e)
         {
             // Reset everything in the form
-
             dataGridView1.DataSource = null;
-
             dateTimePicker1.Value = DateTime.Now;
-
             newButtonPressed = false;
 
             // Upper left-hand textboxes

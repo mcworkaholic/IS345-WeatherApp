@@ -73,6 +73,7 @@
             this.blankBox = new System.Windows.Forms.PictureBox();
             this.noDataLabel = new System.Windows.Forms.Label();
             this.copyRightLabel = new System.Windows.Forms.Label();
+            this.confirmButton = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.weatherBox.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.refreshBox1)).BeginInit();
@@ -547,12 +548,24 @@
             this.copyRightLabel.TabIndex = 17;
             this.copyRightLabel.Text = "Copyright ©️ 2023 Weston Evans";
             // 
+            // confirmButton
+            // 
+            this.confirmButton.Location = new System.Drawing.Point(394, 232);
+            this.confirmButton.Name = "confirmButton";
+            this.confirmButton.Size = new System.Drawing.Size(92, 23);
+            this.confirmButton.TabIndex = 12;
+            this.confirmButton.Text = "Confirm";
+            this.confirmButton.UseVisualStyleBackColor = true;
+            this.confirmButton.Visible = false;
+            this.confirmButton.Click += new System.EventHandler(this.confirmButton_Click);
+            // 
             // WeatherForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(630, 521);
+            this.Controls.Add(this.confirmButton);
             this.Controls.Add(this.copyRightLabel);
             this.Controls.Add(this.noDataLabel);
             this.Controls.Add(this.blankBox);
@@ -630,5 +643,6 @@
         private PictureBox blankBox;
         private Label noDataLabel;
         private Label copyRightLabel;
+        private Button confirmButton;
     }
 }

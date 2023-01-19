@@ -1,12 +1,98 @@
 using System.Data;
 using System.Data.SQLite;
+using static System.ComponentModel.Design.ObjectSelectorEditor;
+using System.Drawing;
 using TextBox = System.Windows.Forms.TextBox;
 
 namespace Project_2
 {
+
     public partial class WeatherForm : Form
 
     {
+        public class US_State
+        {
+            public string Name { get; set; }
+            public string Abbreviations { get; set; }
+
+            public string Region { get; set; }
+
+            public US_State(string abbreviations, string name, string region)
+            {
+                Abbreviations = abbreviations;
+                Name = name;
+                Region = region;
+            }
+        }
+
+        static class StateArray
+        {
+            public static List<US_State> states;
+
+            static StateArray()
+            {
+                states = new List<US_State>(50)
+                {  // US Climate Regions provided by NOAA.gov
+                    new US_State("AL", "Alabama", "Southeast"),
+                    new US_State("AK", "Alaska", "Noncontig"),
+                    new US_State("AZ", "Arizona", "Southwest"),
+                    new US_State("AR", "Arkansas", "Southeast"),
+                    new US_State("CA", "California", "West"),
+                    new US_State("CO", "Colorado", "Southwest"),
+                    new US_State("CT", "Connecticut", "Northeast"),
+                    new US_State("DE", "Delaware", "Northeast"),
+                    new US_State("DC", "District Of Columbia", "Northeast"),
+                    new US_State("FL", "Florida", "Southeast"),
+                    new US_State("GA", "Georgia", "Southeast"),
+                    new US_State("HI", "Hawaii", "Noncontig"),
+                    new US_State("ID", "Idaho", "Northwest"),
+                    new US_State("IL", "Illinois", "Ohio Valley"),
+                    new US_State("IN", "Indiana", "Ohio Valley"),
+                    new US_State("IA", "Iowa", "Upper Midwest"),
+                    new US_State("KS", "Kansas", "South"),
+                    new US_State("KY", "Kentucky", "Ohio Valley"),
+                    new US_State("LA", "Louisiana", "South"),
+                    new US_State("ME", "Maine", "Northeast"),
+                    new US_State("MD", "Maryland", "Northeast"),
+                    new US_State("MA", "Massachusetts", "Northeast"),
+                    new US_State("MI", "Michigan", "Upper Midwest"),
+                    new US_State("MN", "Minnesota", "Upper Midwest"),
+                    new US_State("MS", "Mississippi", "South"),
+                    new US_State("MO", "Missouri", "Ohio Valley"),
+                    new US_State("MT", "Montana", "Northern Rockies and Plains"),
+                    new US_State("NE", "Nebraska", "Northern Rockies and Plains"),
+                    new US_State("NV", "Nevada", "West"),
+                    new US_State("NH", "New Hampshire", "Northeast"),
+                    new US_State("NJ", "New Jersey", "Northeast"),
+                    new US_State("NM", "New Mexico", "Southwest"),
+                    new US_State("NY", "New York", "Northeast"),
+                    new US_State("NC", "North Carolina", "Southeast"),
+                    new US_State("ND", "North Dakota", "Northern Rockies and Plains"),
+                    new US_State("OH", "Ohio", "Ohio Valley"),
+                    new US_State("OK", "Oklahoma", "South"),
+                    new US_State("OR", "Oregon", "Northwest"),
+                    new US_State("PA", "Pennsylvania", "Northeast"),
+                    new US_State("RI", "Rhode Island", "Northeast"),
+                    new US_State("SC", "South Carolina", "Southeast"),
+                    new US_State("SD", "South Dakota", "Northern Rockies and Plains"),
+                    new US_State("TN", "Tennessee", "Ohio Valley"),
+                    new US_State("TX", "Texas", "South"),
+                    new US_State("UT", "Utah", "Southwest"),
+                    new US_State("VT", "Vermont", "Northeast"),
+                    new US_State("VA", "Virginia", "Southeast"),
+                    new US_State("WA", "Washington", "Northwest"),
+                    new US_State("WV", "West Virginia", "Ohio Valley"),
+                    new US_State("WI", "Wisconsin", "Upper Midwest"),
+                    new US_State("WY", "Wyoming", "Northern Rockies and Plains")
+                };
+            }
+
+            public static List<US_State> States()
+            {
+                return states;
+            }
+        }
+
         Control[] controls;
         public WeatherForm()
         {
@@ -26,6 +112,7 @@ namespace Project_2
         DataTable datatable;
         SQLiteDataAdapter adapter;
         private bool newButtonPressed = false;
+        private string selectedFile;
 
         // Queries for the avg textboxes
         string[] queries = { "SELECT AVG(temp) FROM weather WHERE state = 'WI';", 
@@ -42,7 +129,6 @@ namespace Project_2
          "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX",
          "UT", "VA", "VT", "WA", "WI", "WV", "WY"};
 
-        private string selectedFile;
         private void cityTextBox_TextChanged(object sender, EventArgs e)
         {   // regex for characters, spaces, and backspaces
             string pattern = @"^[A-Za-z.\s+\b]+$";
@@ -226,6 +312,21 @@ namespace Project_2
             // Close form
             this.Close();
         }
+        private string ReturnRegion()
+        {
+            string region = "N/A";
+            string selectedAbbreviation = stateBox.GetItemText(stateBox.SelectedItem);
+
+            foreach (US_State state in StateArray.states)
+            {
+                if (state.Abbreviations == selectedAbbreviation)
+                {
+                    region = state.Region;
+                    return region;
+                }
+            }
+            return region;
+        }
         private void addButton_Click(object sender, EventArgs e)
         {
             try
@@ -259,7 +360,19 @@ namespace Project_2
 
                     // Create a new SQLiteCommand object with the INSERT INTO statement
                     string theDate = dateTimePicker1.Value.ToString("yyyy-MM-dd");
-                    Query = string.Format("INSERT INTO weather (city, state, date, temp) VALUES ('{0}', '{1}', '{2}', '{3}')", cityTextBox.Text, stateBox.Text, theDate, tempTextBox.Text);
+                    string year = theDate.Substring(0, 4);
+                    string month = theDate.Substring(5, 2);
+                    if (month.StartsWith("0"))
+                    {
+                        month = month.Remove(month.IndexOf("0"), 1);
+                    }
+                    string day = theDate.Substring(8, 2);
+                    if (day.StartsWith("0"))
+                    {
+                        day = day.Remove(day.IndexOf("0"), 1);
+                    }
+                    MessageBox.Show("theDate: " + theDate + " " + "year : " + year + " " + " month: " + month + " day: " + day);
+                    Query = string.Format("INSERT INTO weather (city, state, region, year, month, day, temp) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}')", cityTextBox.Text, stateBox.Text, ReturnRegion(), year, month, day, tempTextBox.Text);
                     cmd = new SQLiteCommand(Query, con);
                     cmd.ExecuteNonQuery();
                     con.Close();
@@ -329,7 +442,7 @@ namespace Project_2
         private void searchTextBox_TextChanged(object sender, EventArgs e)
         {
             DataView DV = new DataView(datatable);
-            DV.RowFilter = string.Format("city LIKE '%{0}%' OR state LIKE '%{1}%' OR date LIKE '%{2}%'", searchTextBox.Text, searchTextBox.Text, searchTextBox.Text);
+            DV.RowFilter = string.Format("city LIKE '%{0}%' OR state LIKE '%{1}%' OR year LIKE '%{2}%' OR region LIKE '%{3}%'", searchTextBox.Text, searchTextBox.Text, searchTextBox.Text, searchTextBox.Text);
             dataGridView1.DataSource = DV;
         }
         private void tempTextBox_KeyPress(object sender, KeyPressEventArgs e)
@@ -421,63 +534,12 @@ namespace Project_2
             // Enable editing mode on the DataGridView
             dataGridView1.ReadOnly = false;
             // Change text of the remove button to "Confirm"
-            removeButton.Text = "Confirm";
+            confirmButton.Visible = true;
             // Make cancel button visible so user can exit "removal" mode. 
             cancelButton.Visible = true;
             dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            removeButton.Click -= removeButton_Click;
-            removeButton.Click += confirmRemoveButton_Click;
         }
 
-        // Confirms data removal from the datagrid
-        private void confirmRemoveButton_Click(object sender, EventArgs e)
-        {
-            DialogResult result = MessageBox.Show("                  Are you sure?", "Confirm Delete", MessageBoxButtons.YesNo);
-            if (result == DialogResult.Yes)
-            {
-                // Check if there are any selected rows
-                if (dataGridView1.SelectedRows.Count > 0)
-                {
-                    // Get the selected rows
-                    DataGridViewSelectedRowCollection selectedRows = dataGridView1.SelectedRows;
-
-                    // Iterate through the selected rows and remove them from the DataTable
-                    foreach (DataGridViewRow row in selectedRows)
-                    {
-                        int index = row.Index;
-                        if (dataGridView1.Rows[index].Cells["weather_id"].Value != null)
-                        {
-                            string id = dataGridView1.Rows[index].Cells["weather_id"].Value.ToString();
-                            string query = "DELETE FROM weather WHERE weather_id = " + id;
-                            cmd = new SQLiteCommand(query, con);
-                            adapter.DeleteCommand = cmd;
-                            datatable.Rows[index].Delete();
-                            adapter.Update(datatable);
-                            ReloadAVGTextBoxes();
-                        }
-                        else
-                        {
-                            // Show a message box if no rows are selected
-                            MessageBox.Show("No rows selected.");
-                        }
-                    }
-                    // Change the text of the remove button as well as make the datagrid/db read only
-                    removeButton.Text = "Remove";
-                    dataGridView1.ReadOnly = true;
-                    removeButton.Click += removeButton_Click;
-                    removeButton.Click -= confirmRemoveButton_Click;
-                }
-                else
-                {
-                    // Show a message box if no rows are selected
-                    MessageBox.Show("No rows selected.");
-                }
-            }
-            else if (result == DialogResult.No)
-            {
-                // Do not perform delete action
-            }
-        }
         // newButton_Click creates a new database in the project directory and switches to it
         private void newButton_Click(object sender, EventArgs e)
         {
@@ -507,7 +569,7 @@ namespace Project_2
                 con.Open();
 
                 // Create a table with the same column names as the existing one
-                string createTableQuery = "CREATE TABLE weather (weather_id INTEGER PRIMARY KEY AUTOINCREMENT, city TEXT, state TEXT, date TEXT, temp REAL)";
+                string createTableQuery = "CREATE TABLE weather (weather_id INTEGER PRIMARY KEY AUTOINCREMENT, city TEXT NOT NULL, state TEXT NOT NULL, region TEXT NOT NULL, year INTEGER NOT NULL, month INTEGER NOT NULL, day INTEGER NOT NULL, temp REAL NOT NULL)";
 
                 // Perform CREATE DDL and close connection
                 SQLiteCommand cmdCreate = new SQLiteCommand(createTableQuery, con);
@@ -551,7 +613,7 @@ namespace Project_2
                             var values = line.Split(',');
 
                             // Insert the data into the SQLite database
-                            Query = string.Format("INSERT INTO weather (city, state, date, temp) VALUES ('{0}', '{1}', '{2}', '{3}')", values[0], values[1], values[2], values[3]);
+                            Query = string.Format("INSERT INTO weather (city, state, region, year, month, day, temp) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}')", values[0], values[1], values[2], values[3], values[4], values[5], values[6]);
                             cmd = new SQLiteCommand(Query, con);
                             cmd.ExecuteNonQuery();
                         }
@@ -574,14 +636,10 @@ namespace Project_2
 
         private void cancelButton_Click(object sender, EventArgs e)
         {
-            // exit out of "Remove" mode 
-            removeButton.Text = "Remove";
             dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
-            cancelButton.Visible = false;
             dataGridView1.ReadOnly = true;
-            // Resets the remove button's behavior back to the way it was before the "removal mode" was activated
-            removeButton.Click += removeButton_Click;
-            removeButton.Click -= confirmRemoveButton_Click;
+            cancelButton.Visible = false;
+            confirmButton.Visible = false;
         }
 
         private void resetButton_Click(object sender, EventArgs e)
@@ -615,6 +673,47 @@ namespace Project_2
             }
             // Clear statebox combobox
             stateBox.Items.Clear();
+            cancelButton.Visible = false;
+        }
+
+        private void confirmButton_Click(object sender, EventArgs e)
+        {
+            // Check if there are any selected rows
+            if (dataGridView1.SelectedRows.Count > 0)
+            {
+                // Get the selected rows
+                DataGridViewSelectedRowCollection selectedRows = dataGridView1.SelectedRows;
+
+                // Iterate through the selected rows and remove them from the DataTable
+                foreach (DataGridViewRow row in selectedRows)
+                {
+                    int index = row.Index;
+                    if (dataGridView1.Rows[index].Cells["weather_id"].Value != null)
+                    {
+                        string id = dataGridView1.Rows[index].Cells["weather_id"].Value.ToString();
+                        string query = "DELETE FROM weather WHERE weather_id = " + id;
+                        cmd = new SQLiteCommand(query, con);
+                        adapter.DeleteCommand = cmd;
+                        datatable.Rows[index].Delete();
+                        adapter.Update(datatable);
+                        ReloadAVGTextBoxes();
+                    }
+                    else
+                    {
+                        // Show a message box if no rows are selected
+                        MessageBox.Show("No rows selected.");
+                    }
+                }
+                // Change the text of the remove button as well as make the datagrid/db read only
+                dataGridView1.ReadOnly = true;
+                confirmButton.Visible = false;
+                cancelButton.Visible = false;
+            }
+            else
+            {
+                // Show a message box if no rows are selected
+                MessageBox.Show("No rows selected.");
+            }
         }
     }
 }

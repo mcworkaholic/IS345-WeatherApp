@@ -1,9 +1,9 @@
-city,state,date,temp
-St. Cloud,MN,2009-09-18,82.91
-Fargo,ND,2008-01-02,-26.67
-New Hradec,ND,2009-04-15,47.54
-Sioux Falls,SD,2006-07-12,98.3
-Oshkosh,WI,2006-10-20,63
-Green Bay,WI,2004-12-21,-12.45
-Fort Dodge,IA,2006-07-07,101.23
-Moscow,ND,2010-01-20,-30
+weather_id,city,state,region,year,month,day,temp
+,St. Cloud,MN,Upper Midwest,2009,9,18,82.91
+,Fargo,ND,Northern Rockies and Plains,2008,1,2,-26.67
+,New Hradec,ND,Northern Rockies and Plains,2009,4,15,47.54
+,Sioux Falls,SD,Northern Rockies and Plains,2006,7,12,98.3
+,Oshkosh,WI,Upper Midwest,2006,10,20,63
+,Green Bay,WI,Upper Midwest,2004,12,21,-12.45
+,Fort Dodge,IA,Upper Midwest,2006,7,7,101.23
+,Moscow,ND,Northern Rockies and Plains,2010,1,20,-30

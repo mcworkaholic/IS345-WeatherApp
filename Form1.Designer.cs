@@ -72,8 +72,8 @@
             this.bulkInsertButton = new System.Windows.Forms.Button();
             this.blankBox = new System.Windows.Forms.PictureBox();
             this.noDataLabel = new System.Windows.Forms.Label();
-            this.copyRightLabel = new System.Windows.Forms.Label();
             this.confirmButton = new System.Windows.Forms.Button();
+            this.plotButton = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.weatherBox.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.refreshBox1)).BeginInit();
@@ -539,15 +539,6 @@
             this.noDataLabel.TabIndex = 16;
             this.noDataLabel.Text = "No Data";
             // 
-            // copyRightLabel
-            // 
-            this.copyRightLabel.AutoSize = true;
-            this.copyRightLabel.Location = new System.Drawing.Point(203, 432);
-            this.copyRightLabel.Name = "copyRightLabel";
-            this.copyRightLabel.Size = new System.Drawing.Size(177, 15);
-            this.copyRightLabel.TabIndex = 17;
-            this.copyRightLabel.Text = "Copyright ©️ 2023 Weston Evans";
-            // 
             // confirmButton
             // 
             this.confirmButton.Location = new System.Drawing.Point(394, 232);
@@ -559,14 +550,24 @@
             this.confirmButton.Visible = false;
             this.confirmButton.Click += new System.EventHandler(this.confirmButton_Click);
             // 
+            // plotButton
+            // 
+            this.plotButton.Location = new System.Drawing.Point(493, 431);
+            this.plotButton.Name = "plotButton";
+            this.plotButton.Size = new System.Drawing.Size(75, 23);
+            this.plotButton.TabIndex = 17;
+            this.plotButton.Text = "Plot";
+            this.plotButton.UseVisualStyleBackColor = true;
+            this.plotButton.Click += new System.EventHandler(this.plotButton_Click);
+            // 
             // WeatherForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(630, 521);
+            this.Controls.Add(this.plotButton);
             this.Controls.Add(this.confirmButton);
-            this.Controls.Add(this.copyRightLabel);
             this.Controls.Add(this.noDataLabel);
             this.Controls.Add(this.blankBox);
             this.Controls.Add(this.bulkInsertButton);
@@ -642,7 +643,7 @@
         private GroupBox startGroupBox;
         private PictureBox blankBox;
         private Label noDataLabel;
-        private Label copyRightLabel;
         private Button confirmButton;
+        private Button plotButton;
     }
 }

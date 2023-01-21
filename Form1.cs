@@ -1,7 +1,7 @@
 using System.Data;
+using System.Diagnostics;
 using System.Data.SQLite;
-using static System.ComponentModel.Design.ObjectSelectorEditor;
-using System.Drawing;
+using System.Globalization;
 using TextBox = System.Windows.Forms.TextBox;
 
 namespace Project_2
@@ -86,7 +86,6 @@ namespace Project_2
                     new US_State("WY", "Wyoming", "Northern Rockies and Plains")
                 };
             }
-
             public static List<US_State> States()
             {
                 return states;
@@ -102,13 +101,12 @@ namespace Project_2
             refreshBox1, bulkInsertButton, resetButton, editButton, removeButton};
         }
         // GLOBALS, to be altered by the application
-        string dbFile;
+        
         SQLiteConnection con;
         DialogResult dialogFileConfirm;
         SQLiteCommand cmd;
         string Query;
         string newDbFile;
-        string currentFile;
         DataTable datatable;
         SQLiteDataAdapter adapter;
         private bool newButtonPressed = false;
@@ -120,7 +118,7 @@ namespace Project_2
             "SELECT AVG(temp) FROM weather WHERE state = 'SD';", 
             "SELECT AVG(temp) FROM weather WHERE state = 'ND';", 
             "SELECT AVG(temp) FROM weather WHERE state = 'MN';", 
-            "SELECT AVG(temp) FROM weather;" };
+            "SELECT AVG(temp) FROM weather WHERE state in ('WI', 'IA', 'SD', 'ND', 'MN');" };
 
         // Array of all state abbreviations for the state combobox
         string[] states = {"AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA",
@@ -185,7 +183,7 @@ namespace Project_2
         }
 
         // Loads data from the selected file into the dataGridView.
-        private void LoadData(string selectedFile)
+        private void LoadData(string selectedFile)  // DO NOT CHANGE ///////////
         {
             // Create a new connection to the selected file
             con = new SQLiteConnection(@"data source =" + selectedFile);
@@ -221,17 +219,10 @@ namespace Project_2
              * either the default "weather.db" provided with the application or a newly created file if the newButtonPressed flag is set.
              */
             string workingDirectory = Environment.CurrentDirectory;
-            string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName;
-            if (newButtonPressed)
-            {
-                dbFile = newDbFile;
-            }
-            else
-            {
-                dbFile = selectedFile;
-            }
+            string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "/Data";
+
             // Creating new connection object
-            using (SQLiteConnection con = new SQLiteConnection(@"data source =" + Path.Combine(projectDirectory, dbFile)))
+            using (SQLiteConnection con = new SQLiteConnection(@"data source =" + Path.Combine(projectDirectory, CheckCurrentFile())))
             {
                 try
                 {
@@ -272,7 +263,7 @@ namespace Project_2
 
             // Set the initial directory to the current project directory
             string workingDirectory = Environment.CurrentDirectory;
-            string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName;
+            string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "/Data";
             openFileDialog.InitialDirectory = projectDirectory;
 
             // Set the filter to look for .db files
@@ -331,6 +322,8 @@ namespace Project_2
         {
             try
             {
+                // Changes whatever the user enters into title case (princeton -> Princeton) or (san francisco -> San Francisco)
+                cityTextBox.Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(cityTextBox.Text);
                 // Check if the temperature entered is within the allowed range
                 if (double.Parse(tempTextBox.Text) < -70 || double.Parse(tempTextBox.Text) > 140)
                 {
@@ -338,41 +331,31 @@ namespace Project_2
                 }
                 else
                 {
-                    // Get the current directory and project directory
                     dataGridView1.DataSource = null;
                     dataGridView1.Update();
                     dataGridView1.Refresh();
-                    // connection object
-                    string workingDirectory = Environment.CurrentDirectory;
-                    string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName;
 
                     // check if a new database was created/new button was pressed and confirmed
-                    if (!newButtonPressed)
-                    {
-                        con = new SQLiteConnection(@"data source =" + projectDirectory + "/" + "weather.db");
-                    }
-                    else
-                    {
-                        // Connect to the new weather_[randomNumber].db file
-                        con = new SQLiteConnection(@"data source =" + newDbFile);
-                    }
+                    
+                    con = new SQLiteConnection(@"data source =" + CheckCurrentFile());
                     con.Open();
 
                     // Create a new SQLiteCommand object with the INSERT INTO statement
-                    string theDate = dateTimePicker1.Value.ToString("yyyy-MM-dd");
-                    string year = theDate.Substring(0, 4);
-                    string month = theDate.Substring(5, 2);
+                    string theDate = dateTimePicker1.Value.ToString("MM/dd/yyyy");
+                    
+                    string year = theDate.Substring(6, 4);
+                    string month = theDate.Substring(0, 2);
                     if (month.StartsWith("0"))
                     {
                         month = month.Remove(month.IndexOf("0"), 1);
                     }
-                    string day = theDate.Substring(8, 2);
+                    string day = theDate.Substring(3, 2);
                     if (day.StartsWith("0"))
                     {
                         day = day.Remove(day.IndexOf("0"), 1);
                     }
-                    MessageBox.Show("theDate: " + theDate + " " + "year : " + year + " " + " month: " + month + " day: " + day);
-                    Query = string.Format("INSERT INTO weather (city, state, region, year, month, day, temp) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}')", cityTextBox.Text, stateBox.Text, ReturnRegion(), year, month, day, tempTextBox.Text);
+                    //MessageBox.Show("theDate: " + theDate + " " + "year : " + year + " " + " month: " + month + " day: " + day);  
+                    Query = string.Format("INSERT INTO weather (city, state, region, date, year, month, day, temp) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}')", cityTextBox.Text, stateBox.Text, ReturnRegion(), theDate, year, month, day, tempTextBox.Text);
                     cmd = new SQLiteCommand(Query, con);
                     cmd.ExecuteNonQuery();
                     con.Close();
@@ -380,25 +363,15 @@ namespace Project_2
                     // set the selection mode for the data grid view to cell select
                     dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
 
-                    // check if the new button has been pressed
-                    if (newButtonPressed)
-                    {
-                        // if it has, load the data from the new database file
-                        LoadData(newDbFile);
-                    }
-                    else if (!newButtonPressed)
-                    {
-                        // if not, load data from the selected file
-                        LoadData(selectedFile);
-                    }
+                    LoadData(CheckCurrentFile());
                     EmptyTextBoxes();
                     ReloadAVGTextBoxes();
                 }
             }
-            catch (FormatException)
+            catch (FormatException ex)
             {
                 // Handle the exception
-                MessageBox.Show("Fields must not be empty.");
+                MessageBox.Show("error : " + ex.Message);
             }
         }
 
@@ -457,29 +430,15 @@ namespace Project_2
         // Homemade refresh button 2, refreshes datagrid to original state
         private void refreshBox2_Click(object sender, EventArgs e)
         {
-            if (!newButtonPressed)
-            {
-                LoadData(selectedFile);
-                ReloadAVGTextBoxes();
-            }
-            else if (newButtonPressed)
-            {
-                LoadData(newDbFile);
-            }
+            LoadData(CheckCurrentFile());
+            ReloadAVGTextBoxes();
 
         }
         // Homemade refresh button 2, refreshes datagrid to original state
         private void refreshBox1_Click(object sender, EventArgs e)
         {
-            if (!newButtonPressed)
-            {
-                LoadData(selectedFile);
-                ReloadAVGTextBoxes();
-            }
-            else if (newButtonPressed)
-            {
-                LoadData(newDbFile);
-            }
+            LoadData(CheckCurrentFile());
+            ReloadAVGTextBoxes();
         }
         private void editButton_Click(object sender, EventArgs e)
         {
@@ -554,7 +513,7 @@ namespace Project_2
 
                 // Get the current directory
                 string workingDirectory = Environment.CurrentDirectory;
-                string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName;
+                string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "/Data";
 
                 // Create a new .db file in the current directory with a unique name
                 newDbFile = Path.Combine(projectDirectory, newFileName);
@@ -569,7 +528,7 @@ namespace Project_2
                 con.Open();
 
                 // Create a table with the same column names as the existing one
-                string createTableQuery = "CREATE TABLE weather (weather_id INTEGER PRIMARY KEY AUTOINCREMENT, city TEXT NOT NULL, state TEXT NOT NULL, region TEXT NOT NULL, year INTEGER NOT NULL, month INTEGER NOT NULL, day INTEGER NOT NULL, temp REAL NOT NULL)";
+                string createTableQuery = "CREATE TABLE weather (weather_id INTEGER PRIMARY KEY AUTOINCREMENT, city TEXT NOT NULL, state TEXT NOT NULL, region TEXT NOT NULL, date TEXT NOT NULL, year TEXT NOT NULL, month TEXT NOT NULL, day TEXT NOT NULL, temp REAL NOT NULL)";
 
                 // Perform CREATE DDL and close connection
                 SQLiteCommand cmdCreate = new SQLiteCommand(createTableQuery, con);
@@ -588,7 +547,7 @@ namespace Project_2
             }
         }
         // csvImport takes the current db file being displayed in the datagrid as an argument
-        private void csvImport(string currentFile)
+        private void csvImport()
         {
             // Import from CSV in Project folder and insert into current db/datagrid
             OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -598,12 +557,12 @@ namespace Project_2
                 string filePath = openFileDialog.FileName;
 
                 // Read the CSV file and insert the data into the SQLite database
-                using (SQLiteConnection con = new SQLiteConnection(@"data source =" + currentFile))
+                using (SQLiteConnection con = new SQLiteConnection(@"data source =" + CheckCurrentFile()))
                 {
                     con.Open();
 
                     using (var reader = new StreamReader(filePath))
-                    {   
+                    {
                         // hacky way of skipping the first line
                         reader.ReadLine();
 
@@ -613,29 +572,25 @@ namespace Project_2
                             var values = line.Split(',');
 
                             // Insert the data into the SQLite database
-                            Query = string.Format("INSERT INTO weather (city, state, region, year, month, day, temp) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}')", values[0], values[1], values[2], values[3], values[4], values[5], values[6]);
+                            Query = string.Format("INSERT INTO weather (city, state, region, date, year, month, day, temp) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}')", values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7]);
                             cmd = new SQLiteCommand(Query, con);
                             cmd.ExecuteNonQuery();
                         }
                     }
                     con.Close();
-                    LoadData(currentFile);
+                    LoadData(CheckCurrentFile());
                 }
             }
         }
         private void bulkInsertButton_Click(object sender, EventArgs e)
         {
-            if (newButtonPressed == true)
-            {
-                csvImport(newDbFile);
-            }
-            else {
-                csvImport(selectedFile);
-            }
+            csvImport();
+            ReloadAVGTextBoxes();
         }
 
         private void cancelButton_Click(object sender, EventArgs e)
         {
+            // exit out of "removal" mode
             dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
             dataGridView1.ReadOnly = true;
             cancelButton.Visible = false;
@@ -702,6 +657,7 @@ namespace Project_2
                     {
                         // Show a message box if no rows are selected
                         MessageBox.Show("No rows selected.");
+                        dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
                     }
                 }
                 // Change the text of the remove button as well as make the datagrid/db read only
@@ -713,6 +669,90 @@ namespace Project_2
             {
                 // Show a message box if no rows are selected
                 MessageBox.Show("No rows selected.");
+            }
+        }
+        private string CheckCurrentFile()
+        {
+            string filename = "";
+            if (!newButtonPressed)
+            {
+                filename = selectedFile;
+                return filename;
+            }
+            else if (newButtonPressed)
+            {
+                filename = newDbFile;
+                return filename;
+            }
+            return filename;
+        }
+        private void plotButton_Click(object sender, EventArgs e)
+        {
+            
+            // May need to change python path to something like "C:\Python311\python.exe"
+            string pythonPath = "python3";
+
+            string workingDirectory = Environment.CurrentDirectory;
+            string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName;
+
+            // plotting script location
+            string scriptPath = projectDirectory + "\\Scripts\\tempPlotter.py";
+
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = pythonPath,
+                    Arguments = $"{scriptPath} {CheckCurrentFile()}",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                }
+            };
+            process.StartInfo.RedirectStandardError = true;
+            process.Start();
+            string output = process.StandardOutput.ReadToEnd();
+            string error = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+
+            if (process.HasExited)
+            {
+                if (process.ExitCode == 0)
+                {
+                    // process completed successfully
+                    // check the output and error variables for any messages
+                    // Create a new form to display the figure
+                    Form figureForm = new Form();
+
+                    // Create a new PictureBox control
+                    PictureBox figureBox = new PictureBox();
+
+                    // Set the Image property of the PictureBox to the saved figure file
+                    figureBox.Image = Image.FromFile(projectDirectory + "\\img\\plot.png");
+
+                    // Set the size of the PictureBox to match the size of the image
+                    figureBox.Size = figureBox.Image.Size;
+
+                    // Add the PictureBox control to the form
+                    figureForm.Controls.Add(figureBox);
+
+                    figureForm.WindowState = FormWindowState.Maximized;
+
+                    // Show the form
+                    figureForm.Show();
+                }
+                else
+                {
+                    // process completed with an error
+                    // check the output and error variables for any error messages
+                    MessageBox.Show(error);
+                }
+            }
+            else
+            {
+                // process did not complete
+                // check the output and error variables for any messages
+                MessageBox.Show(error);
             }
         }
     }

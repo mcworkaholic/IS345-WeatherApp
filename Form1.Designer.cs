@@ -53,6 +53,8 @@
             this.cityTextBox = new System.Windows.Forms.TextBox();
             this.startGroupBox = new System.Windows.Forms.GroupBox();
             this.tempBox = new System.Windows.Forms.GroupBox();
+            this.gifBoxCold = new System.Windows.Forms.PictureBox();
+            this.gifBoxHot = new System.Windows.Forms.PictureBox();
             this.regionTextBox = new System.Windows.Forms.TextBox();
             this.regionLabel = new System.Windows.Forms.Label();
             this.mnTextBox = new System.Windows.Forms.TextBox();
@@ -74,10 +76,13 @@
             this.noDataLabel = new System.Windows.Forms.Label();
             this.confirmButton = new System.Windows.Forms.Button();
             this.plotButton = new System.Windows.Forms.Button();
+            this.timer1 = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.weatherBox.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.refreshBox1)).BeginInit();
             this.tempBox.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.gifBoxCold)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.gifBoxHot)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.refreshBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.blankBox)).BeginInit();
             this.SuspendLayout();
@@ -325,6 +330,8 @@
             // 
             // tempBox
             // 
+            this.tempBox.Controls.Add(this.gifBoxCold);
+            this.tempBox.Controls.Add(this.gifBoxHot);
             this.tempBox.Controls.Add(this.regionTextBox);
             this.tempBox.Controls.Add(this.regionLabel);
             this.tempBox.Controls.Add(this.mnTextBox);
@@ -343,6 +350,28 @@
             this.tempBox.TabIndex = 10;
             this.tempBox.TabStop = false;
             this.tempBox.Text = "Average Temperature";
+            // 
+            // gifBoxCold
+            // 
+            this.gifBoxCold.Image = ((System.Drawing.Image)(resources.GetObject("gifBoxCold.Image")));
+            this.gifBoxCold.Location = new System.Drawing.Point(3, 0);
+            this.gifBoxCold.Name = "gifBoxCold";
+            this.gifBoxCold.Size = new System.Drawing.Size(290, 214);
+            this.gifBoxCold.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.gifBoxCold.TabIndex = 18;
+            this.gifBoxCold.TabStop = false;
+            this.gifBoxCold.Visible = false;
+            // 
+            // gifBoxHot
+            // 
+            this.gifBoxHot.Image = ((System.Drawing.Image)(resources.GetObject("gifBoxHot.Image")));
+            this.gifBoxHot.Location = new System.Drawing.Point(0, 0);
+            this.gifBoxHot.Name = "gifBoxHot";
+            this.gifBoxHot.Size = new System.Drawing.Size(293, 214);
+            this.gifBoxHot.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.gifBoxHot.TabIndex = 12;
+            this.gifBoxHot.TabStop = false;
+            this.gifBoxHot.Visible = false;
             // 
             // regionTextBox
             // 
@@ -558,7 +587,13 @@
             this.plotButton.TabIndex = 17;
             this.plotButton.Text = "Plot";
             this.plotButton.UseVisualStyleBackColor = true;
+            this.plotButton.Visible = false;
             this.plotButton.Click += new System.EventHandler(this.plotButton_Click);
+            // 
+            // timer1
+            // 
+            this.timer1.Interval = 4000;
+            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
             // WeatherForm
             // 
@@ -585,13 +620,15 @@
             this.Controls.Add(this.dataGridView1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "WeatherForm";
-            this.Text = "Weather Analysis V2.0";
+            this.Text = "Temperature Analysis V2.0";
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.weatherBox.ResumeLayout(false);
             this.weatherBox.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.refreshBox1)).EndInit();
             this.tempBox.ResumeLayout(false);
             this.tempBox.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.gifBoxCold)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.gifBoxHot)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.refreshBox2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.blankBox)).EndInit();
             this.ResumeLayout(false);
@@ -645,5 +682,8 @@
         private Label noDataLabel;
         private Button confirmButton;
         private Button plotButton;
+        private PictureBox gifBoxHot;
+        private System.Windows.Forms.Timer timer1;
+        private PictureBox gifBoxCold;
     }
 }

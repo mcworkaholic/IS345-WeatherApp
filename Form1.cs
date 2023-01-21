@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Data.SQLite;
 using System.Globalization;
 using TextBox = System.Windows.Forms.TextBox;
+using System.Windows.Forms;
 
 namespace Project_2
 {
@@ -98,7 +99,7 @@ namespace Project_2
             InitializeComponent();
             // Array of all controls whose visibility is toggled in the form on data load and form reset
             controls = new Control[] { addButton, searchTextBox, clearButton, refreshBox2, highButton, lowButton,
-            refreshBox1, bulkInsertButton, resetButton, editButton, removeButton};
+            refreshBox1, bulkInsertButton, resetButton, editButton, plotButton, removeButton};
         }
         // GLOBALS, to be altered by the application
         
@@ -320,29 +321,30 @@ namespace Project_2
         }
         private void addButton_Click(object sender, EventArgs e)
         {
-            try
+
+            // Changes whatever the user enters into title case (princeton -> Princeton) or (san francisco -> San Francisco)
+            cityTextBox.Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(cityTextBox.Text);
+            // Check if the temperature entered is within the allowed range
+            if (double.Parse(tempTextBox.Text) < -70 || double.Parse(tempTextBox.Text) > 140)
             {
-                // Changes whatever the user enters into title case (princeton -> Princeton) or (san francisco -> San Francisco)
-                cityTextBox.Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(cityTextBox.Text);
-                // Check if the temperature entered is within the allowed range
-                if (double.Parse(tempTextBox.Text) < -70 || double.Parse(tempTextBox.Text) > 140)
-                {
-                    MessageBox.Show("Temperature out of range (-70 to 140)");
-                }
-                else
+                MessageBox.Show("Temperature out of range (-70 to 140)");
+            }
+            else
+            {
+                try
                 {
                     dataGridView1.DataSource = null;
                     dataGridView1.Update();
                     dataGridView1.Refresh();
 
                     // check if a new database was created/new button was pressed and confirmed
-                    
+
                     con = new SQLiteConnection(@"data source =" + CheckCurrentFile());
                     con.Open();
 
                     // Create a new SQLiteCommand object with the INSERT INTO statement
                     string theDate = dateTimePicker1.Value.ToString("MM/dd/yyyy");
-                    
+
                     string year = theDate.Substring(6, 4);
                     string month = theDate.Substring(0, 2);
                     if (month.StartsWith("0"))
@@ -358,20 +360,31 @@ namespace Project_2
                     Query = string.Format("INSERT INTO weather (city, state, region, date, year, month, day, temp) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}')", cityTextBox.Text, stateBox.Text, ReturnRegion(), theDate, year, month, day, tempTextBox.Text);
                     cmd = new SQLiteCommand(Query, con);
                     cmd.ExecuteNonQuery();
+                    if (double.Parse(tempTextBox.Text) > 100 && double.Parse(tempTextBox.Text) < 140)
+                    {
+                        gifBoxHot.Visible = true;
+                        timer1.Start();
+                    }
+                    else if ((double.Parse(tempTextBox.Text) > -70 && double.Parse(tempTextBox.Text) < 15))
+                    {
+                        gifBoxCold.Visible = true;
+                        timer1.Start();
+                    }
                     con.Close();
 
                     // set the selection mode for the data grid view to cell select
                     dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
 
+
                     LoadData(CheckCurrentFile());
                     EmptyTextBoxes();
                     ReloadAVGTextBoxes();
                 }
-            }
-            catch (FormatException ex)
-            {
-                // Handle the exception
-                MessageBox.Show("error : " + ex.Message);
+                catch (FormatException ex)
+                {
+                    // Handle the exception
+                    MessageBox.Show("error : " + ex.Message);
+                }
             }
         }
 
@@ -754,6 +767,13 @@ namespace Project_2
                 // check the output and error variables for any messages
                 MessageBox.Show(error);
             }
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            timer1.Stop();
+            gifBoxCold.Visible = false;
+            gifBoxHot.Visible = false;
         }
     }
 }

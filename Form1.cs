@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Data.SQLite;
 using System.Globalization;
 using TextBox = System.Windows.Forms.TextBox;
-using System.Windows.Forms;
 
 namespace Project_2
 {
@@ -158,11 +157,13 @@ namespace Project_2
             stateBox.Text = string.Empty;
             tempTextBox.Text = string.Empty;
         }
+        // reloads selected textboxes and their averages
         private void ReloadAVGTextBoxes()
         {
             TextBox[] textboxes = { wiTextBox, iaTextBox, sdTextBox, ndTextBox, mnTextBox, regionTextBox };
             AVGTextboxes(textboxes, queries);
         }
+        // Enables all buttons that should be shown once data is loaded/ new db is created
         private void EnableAll()
         {
             startGroupBox.Visible = false;
@@ -342,7 +343,7 @@ namespace Project_2
                     con = new SQLiteConnection(@"data source =" + CheckCurrentFile());
                     con.Open();
 
-                    // Create a new SQLiteCommand object with the INSERT INTO statement
+                    // sets date format
                     string theDate = dateTimePicker1.Value.ToString("MM/dd/yyyy");
 
                     string year = theDate.Substring(6, 4);
@@ -356,15 +357,20 @@ namespace Project_2
                     {
                         day = day.Remove(day.IndexOf("0"), 1);
                     }
-                    //MessageBox.Show("theDate: " + theDate + " " + "year : " + year + " " + " month: " + month + " day: " + day);  
+                    //MessageBox.Show("theDate: " + theDate + " " + "year : " + year + " " + " month: " + month + " day: " + day);  -> debugging
+
+                    // Create a new SQLiteCommand object with the INSERT INTO statement
                     Query = string.Format("INSERT INTO weather (city, state, region, date, year, month, day, temp) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}')", cityTextBox.Text, stateBox.Text, ReturnRegion(), theDate, year, month, day, tempTextBox.Text);
                     cmd = new SQLiteCommand(Query, con);
                     cmd.ExecuteNonQuery();
+
+                    // shows the hot gif
                     if (double.Parse(tempTextBox.Text) > 100 && double.Parse(tempTextBox.Text) < 140)
                     {
                         gifBoxHot.Visible = true;
                         timer1.Start();
                     }
+                    // shows the cold gif
                     else if ((double.Parse(tempTextBox.Text) > -70 && double.Parse(tempTextBox.Text) < 15))
                     {
                         gifBoxCold.Visible = true;
@@ -428,6 +434,7 @@ namespace Project_2
         private void searchTextBox_TextChanged(object sender, EventArgs e)
         {
             DataView DV = new DataView(datatable);
+            // searchtextbox filtering
             DV.RowFilter = string.Format("city LIKE '%{0}%' OR state LIKE '%{1}%' OR year LIKE '%{2}%' OR region LIKE '%{3}%'", searchTextBox.Text, searchTextBox.Text, searchTextBox.Text, searchTextBox.Text);
             dataGridView1.DataSource = DV;
         }
@@ -684,6 +691,7 @@ namespace Project_2
                 MessageBox.Show("No rows selected.");
             }
         }
+        // returns the filename of the db in use
         private string CheckCurrentFile()
         {
             string filename = "";
@@ -699,10 +707,24 @@ namespace Project_2
             }
             return filename;
         }
+
+        /* plotButton_Click requires a working installation of python 3.10 either on system or in a virtual environment.
+         * In addition, the libraries included in "requirements.txt" in the "Scripts" directory must be installed for visualization.
+         * 
+         * i.e "pip install -r "c:/path/to/requirements.txt"
+         * 
+         * Your luck getting it to work may vary depending on your machine layout and python installation. 
+         * Make sure permissions on the "img" directory are set to read + write for the script to overwrite the plot image. 
+         * 
+         * Basically, this method calls the .py script "tempPlotter.py" in the directory "Scripts" which visualizes the data of the currently selected database
+         * and saves it in the img directory. 
+         * 
+         * It waits for this process to end, then displays the plot in a new form/window.
+         */
         private void plotButton_Click(object sender, EventArgs e)
         {
             
-            // May need to change python path to something like "C:\Python311\python.exe"
+            // May need to change python path to something like "C:\Python311\python.exe" or just "python" depending on your installation
             string pythonPath = "python3";
 
             string workingDirectory = Environment.CurrentDirectory;
@@ -768,7 +790,7 @@ namespace Project_2
                 MessageBox.Show(error);
             }
         }
-
+        // Timer to stop the showing of each gif, set for 4 seconds each for each one in the designer
         private void timer1_Tick(object sender, EventArgs e)
         {
             timer1.Stop();

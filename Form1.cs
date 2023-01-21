@@ -725,7 +725,7 @@ namespace Project_2
         {
             
             // May need to change python path to something like "C:\Python311\python.exe" or just "python" depending on your installation
-            string pythonPath = "python3";
+            string pythonPath = "python";
 
             string workingDirectory = Environment.CurrentDirectory;
             string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName;

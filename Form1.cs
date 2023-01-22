@@ -86,10 +86,6 @@ namespace Project_2
                     new US_State("WY", "Wyoming", "Northern Rockies and Plains")
                 };
             }
-            public static List<US_State> States()
-            {
-                return states;
-            }
         }
 
         Control[] controls;
@@ -101,7 +97,7 @@ namespace Project_2
             refreshBox1, bulkInsertButton, resetButton, editButton, plotButton, removeButton};
         }
         // GLOBALS, to be altered by the application
-        
+
         SQLiteConnection con;
         DialogResult dialogFileConfirm;
         SQLiteCommand cmd;
@@ -113,19 +109,12 @@ namespace Project_2
         private string selectedFile;
 
         // Queries for the avg textboxes
-        string[] queries = { "SELECT AVG(temp) FROM weather WHERE state = 'WI';", 
-            "SELECT AVG(temp) FROM weather WHERE state = 'IA';", 
-            "SELECT AVG(temp) FROM weather WHERE state = 'SD';", 
-            "SELECT AVG(temp) FROM weather WHERE state = 'ND';", 
-            "SELECT AVG(temp) FROM weather WHERE state = 'MN';", 
+        string[] queries = { "SELECT AVG(temp) FROM weather WHERE state = 'WI';",
+            "SELECT AVG(temp) FROM weather WHERE state = 'IA';",
+            "SELECT AVG(temp) FROM weather WHERE state = 'SD';",
+            "SELECT AVG(temp) FROM weather WHERE state = 'ND';",
+            "SELECT AVG(temp) FROM weather WHERE state = 'MN';",
             "SELECT AVG(temp) FROM weather WHERE state in ('WI', 'IA', 'SD', 'ND', 'MN');" };
-
-        // Array of all state abbreviations for the state combobox
-        string[] states = {"AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA",
-         "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", "ME",
-         "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM",
-         "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX",
-         "UT", "VA", "VT", "WA", "WI", "WV", "WY"};
 
         private void cityTextBox_TextChanged(object sender, EventArgs e)
         {   // regex for characters, spaces, and backspaces
@@ -178,9 +167,9 @@ namespace Project_2
             }
 
             // FOR LOOP to add each state to the Combobox
-            for (int i = 0; i < states.Length; i++)
+            foreach (US_State state in StateArray.states)
             {
-                stateBox.Items.Add(states[i]);
+                stateBox.Items.Add(state.Abbreviations);
             }
         }
 
@@ -714,19 +703,21 @@ namespace Project_2
          * i.e "pip install -r "c:/path/to/requirements.txt"
          * 
          * Your luck getting it to work may vary depending on your machine layout and python installation. 
-         * Make sure permissions on the "img" directory are set to read + write for the script to overwrite the plot image. 
+         * Make sure permissions on the "img" directory are set to read + write for the script to overwrite the plot image.
          * 
+         * I'm thinking of compiling it to a .exe so that the correct version, interpreter, and libraries come with it 
+         * getting file permissions to work on every shot is another story
+         *
          * Basically, this method calls the .py script "tempPlotter.py" in the directory "Scripts" which visualizes the data of the currently selected database
          * and saves it in the img directory. 
          * 
-         * It waits for this process to end, then displays the plot in a new form/window.
+         * It waits for this process to end, then displays the saved plot/image in a new form/window. This has potential to be customized
          */
         private void plotButton_Click(object sender, EventArgs e)
         {
-            
+
             // May need to change python path to something like "C:\Python311\python.exe" or just "python" depending on your installation
             string pythonPath = "python3";
-
             string workingDirectory = Environment.CurrentDirectory;
             string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName;
 
@@ -754,6 +745,8 @@ namespace Project_2
             {
                 if (process.ExitCode == 0)
                 {
+                    process.Kill();
+
                     // process completed successfully
                     // check the output and error variables for any messages
                     // Create a new form to display the figure

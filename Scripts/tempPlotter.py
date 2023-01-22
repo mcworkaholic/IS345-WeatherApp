@@ -7,7 +7,7 @@ import sqlite3
 def plot(filename):
     con = sqlite3.connect(filename)
     # Read the data from the local database into a Pandas DataFrame
-    data = pd.read_sql_query("SELECT region, date, year, month, temp FROM weather WHERE year >= 2000 AND year <= 2010 GROUP BY region, date", con)
+    data = pd.read_sql_query("SELECT region, date, year, month, temp, AVG(temp) FROM weather WHERE year >= 2000 AND year <= 2010 GROUP BY region, year, month", con)
     data['date'] = pd.to_datetime(data['date'], format='%m/%d/%Y')
     data['temp'] = pd.to_numeric(data['temp'], errors='coerce')
     data = data.set_index('date')
@@ -18,6 +18,7 @@ def plot(filename):
     print(path)
     # Create the multiple time series plot
     plt.figure(figsize=(17, 8))
+    
     for region in data.region.unique():
         region_data = data[data.region==region]
         try:
@@ -25,10 +26,11 @@ def plot(filename):
         except ValueError:
             pass
     #print(region_data)
+    plt.title("Average Monthly Max Temperature By Region")
     plt.xlabel('Year')
-    plt.ylabel('Daily Max Temperature')
-    plt.legend()
-    parent_dir = os.path.split(os.getcwd())[0]
+    plt.ylabel('Monthly Max Temperature')
+    plt.legend(bbox_to_anchor=(1.01, -0.10), loc='lower right')
+    plt.tight_layout()
     plt.savefig(path + "\\img\\plot.png")
 
 

@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Data.SQLite;
 using System.Globalization;
 using TextBox = System.Windows.Forms.TextBox;
+using static System.Net.Mime.MediaTypeNames;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 namespace Project_2
 {
@@ -24,7 +26,6 @@ namespace Project_2
                 Region = region;
             }
         }
-
         static class StateArray
         {
             public static List<US_State> states;
@@ -34,7 +35,7 @@ namespace Project_2
                 states = new List<US_State>(50)
                 {  // US Climate Regions provided by NOAA.gov
                     new US_State("AL", "Alabama", "Southeast"),
-                    new US_State("AK", "Alaska", "Noncontig"),
+                    new US_State("AK", "Alaska", "Alaska"),
                     new US_State("AZ", "Arizona", "Southwest"),
                     new US_State("AR", "Arkansas", "Southeast"),
                     new US_State("CA", "California", "West"),
@@ -44,7 +45,7 @@ namespace Project_2
                     new US_State("DC", "District Of Columbia", "Northeast"),
                     new US_State("FL", "Florida", "Southeast"),
                     new US_State("GA", "Georgia", "Southeast"),
-                    new US_State("HI", "Hawaii", "Noncontig"),
+                    new US_State("HI", "Hawaii", "Hawaii"),
                     new US_State("ID", "Idaho", "Northwest"),
                     new US_State("IL", "Illinois", "Ohio Valley"),
                     new US_State("IN", "Indiana", "Ohio Valley"),
@@ -288,7 +289,6 @@ namespace Project_2
                 }
             }
         }
-
         private void closeButton_Click(object sender, EventArgs e)
         {
             // Close form
@@ -382,7 +382,6 @@ namespace Project_2
                 }
             }
         }
-
         private void clearButton_Click(object sender, EventArgs e)
         {
             EmptyTextBoxes();
@@ -697,90 +696,101 @@ namespace Project_2
             return filename;
         }
 
-        /* plotButton_Click requires a working installation of python 3.10 either on system or in a virtual environment.
-         * In addition, the libraries included in "requirements.txt" in the "Scripts" directory must be installed for visualization.
-         * 
-         * i.e "pip install -r "c:/path/to/requirements.txt"
-         * 
-         * Your luck getting it to work may vary depending on your machine layout and python installation. 
-         * Make sure permissions on the "img" directory are set to read + write for the script to overwrite the plot image.
-         * 
-         * I'm thinking of compiling it to a .exe so that the correct version, interpreter, and libraries come with it 
-         * getting file permissions to work on every shot is another story
-         *
-         * Basically, this method calls the .py script "tempPlotter.py" in the directory "Scripts" which visualizes the data of the currently selected database
-         * and saves it in the img directory. 
-         * 
-         * It waits for this process to end, then displays the saved plot/image in a new form/window. This has potential to be customized
-         */
+        /*
+
+        plotButton_Click is a method that calls a python script "tempPlotter.py" located in the "Scripts" directory, which generates a plot/image of the data in the currently selected database and saves it in the "img" directory.
+
+        The script requires a working installation of python 3.10 and the libraries specified in the "requirements.txt" file in the "Scripts" directory to be installed.
+
+        The method takes in the user's selected year range from a separate form, and passes it along with the current database file name as parameters to the script.
+
+        Once the script completes execution, the method displays the saved plot/image in a new form/window.
+
+        Note that the method assumes that the correct version of python, interpreter and libraries are available and that the permissions for the "img" directory are set to read + write for the script to overwrite the plot image.
+
+        */
+
         private void plotButton_Click(object sender, EventArgs e)
         {
-
-            // May need to change python path to something like "C:\Python311\python.exe" or just "python" depending on your installation
-            string pythonPath = "python3";
             string workingDirectory = Environment.CurrentDirectory;
             string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName;
 
-            // plotting script location
-            string scriptPath = projectDirectory + "\\Scripts\\tempPlotter.py";
-
-            var process = new Process
+            var selectedYearRange = ("", "");
+            using (Form2 form2 = new Form2())
             {
-                StartInfo = new ProcessStartInfo
+                if (form2.ShowDialog() == DialogResult.OK)
                 {
-                    FileName = pythonPath,
-                    Arguments = $"{scriptPath} {CheckCurrentFile()}",
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                }
-            };
-            process.StartInfo.RedirectStandardError = true;
-            process.Start();
-            string output = process.StandardOutput.ReadToEnd();
-            string error = process.StandardError.ReadToEnd();
-            process.WaitForExit();
+                    selectedYearRange = (form2.YearRange().Item1, form2.YearRange().Item2);
+                    // May need to change python path to something like "C:\Python311\python.exe" or just "python" depending on your installation
+                    string pythonPath = "python3";
 
-            if (process.HasExited)
-            {
-                if (process.ExitCode == 0)
-                {
-                    process.Kill();
+                    // plotting script location
+                    string scriptPath = Path.Combine(projectDirectory, "Scripts", "tempPlotter.py");
 
-                    // process completed successfully
-                    // check the output and error variables for any messages
-                    // Create a new form to display the figure
-                    Form figureForm = new Form();
+                    var process = new Process
+                    {
+                        StartInfo = new ProcessStartInfo
+                        {
+                            FileName = pythonPath,
+                            Arguments = $"{scriptPath} {CheckCurrentFile()} {selectedYearRange.Item1} {selectedYearRange.Item2}",
+                            RedirectStandardOutput = true,
+                            UseShellExecute = false,
+                            CreateNoWindow = true,
+                        }
+                    };
+                    process.StartInfo.RedirectStandardError = true;
+                    process.Start();
+                    string output = process.StandardOutput.ReadToEnd();
+                    string error = process.StandardError.ReadToEnd();
+                    process.WaitForExit();
 
-                    // Create a new PictureBox control
-                    PictureBox figureBox = new PictureBox();
+                    if (process.HasExited)
+                    {
+                        if (process.ExitCode == 0)
+                        {
+                            process.Kill();
 
-                    // Set the Image property of the PictureBox to the saved figure file
-                    figureBox.Image = Image.FromFile(projectDirectory + "\\img\\plot.png");
+                            // process completed successfully
+                            // check the output and error variables for any messages
+                            // Create a new form to display the figure
+                            Form figureForm = new Form();
 
-                    // Set the size of the PictureBox to match the size of the image
-                    figureBox.Size = figureBox.Image.Size;
+                            // Create a new PictureBox control
+                            PictureBox figureBox = new PictureBox();
+                            string figurePath = Path.Combine(projectDirectory, "img", "plot.png");
 
-                    // Add the PictureBox control to the form
-                    figureForm.Controls.Add(figureBox);
+                            // Set the Image property of the PictureBox to the saved figure file
+                            figureBox.Image = System.Drawing.Image.FromFile(figurePath);
 
-                    figureForm.WindowState = FormWindowState.Maximized;
+                            // Set the size of the PictureBox to match the size of the image
+                            figureBox.Size = figureBox.Image.Size;
 
-                    // Show the form
-                    figureForm.Show();
+                            // Add the PictureBox control to the form
+                            figureForm.Controls.Add(figureBox);
+
+                            figureForm.WindowState = FormWindowState.Maximized;
+
+                            // Show the form
+                            figureForm.Show();
+                        }
+                        else
+                        {
+                            // process completed with an error
+                            // check the output and error variables for any error messages
+                            MessageBox.Show(error);
+                        }
+                    }
+                    else
+                    {
+                        // process did not complete
+                        // check the output and error variables for any messages
+                        MessageBox.Show(error);
+                    }
                 }
                 else
                 {
-                    // process completed with an error
-                    // check the output and error variables for any error messages
-                    MessageBox.Show(error);
+                    //Do nothing
                 }
-            }
-            else
-            {
-                // process did not complete
-                // check the output and error variables for any messages
-                MessageBox.Show(error);
             }
         }
         // Timer to stop the showing of each gif, set for 4 seconds each for each one in the designer

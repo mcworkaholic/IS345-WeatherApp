@@ -108,7 +108,7 @@
             this.searchTextBox.PlaceholderText = "Search...";
             this.searchTextBox.Size = new System.Drawing.Size(100, 23);
             this.searchTextBox.TabIndex = 1;
-            this.toolTip1.SetToolTip(this.searchTextBox, "Filter by city, state, or year");
+            this.toolTip1.SetToolTip(this.searchTextBox, "Filter by city, state, year, or region");
             this.searchTextBox.Visible = false;
             this.searchTextBox.TextChanged += new System.EventHandler(this.searchTextBox_TextChanged);
             // 
@@ -297,6 +297,7 @@
             // 
             this.stateBox.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
             this.stateBox.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.stateBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.stateBox.FormattingEnabled = true;
             this.stateBox.Location = new System.Drawing.Point(162, 63);
             this.stateBox.Name = "stateBox";

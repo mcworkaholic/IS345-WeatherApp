@@ -4,10 +4,21 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import sqlite3
 
-def plot(filename):
+"""
+This script is designed to plot a multiple time series of average monthly maximum temperature by region. 
+It takes in three command line arguments: the filename of the SQLite3 database, the begin year and end year to query the data.
+The script first connects to the SQLite3 database using the provided filename and queries the data using the provided begin year and end year as parameters. 
+The data is then read into a Pandas DataFrame and preprocessed to ensure that it is in the correct format for plotting.
+The script then uses the Matplotlib library to create a multiple time series plot of the data, with each region represented by a different line. The plot is saved to the 'img' directory with the name 'plot.png'
+
+"""
+
+def plot(filename, begin_year, end_year):
     con = sqlite3.connect(filename)
-    # Read the data from the local database into a Pandas DataFrame
-    data = pd.read_sql_query("SELECT region, date, year, month, temp, AVG(temp) FROM weather WHERE year >= 2000 AND year <= 2010 GROUP BY region, year, month", con)
+    sql = """SELECT region, date, year, month, temp, AVG(temp) FROM weather WHERE year >= ? AND year <= ? GROUP BY region, year, month"""
+
+    # Read the data from the local database into a Pandas DataFrame with the commandline arguments
+    data = pd.read_sql_query(sql, con, params=[begin_year, end_year])
     data['date'] = pd.to_datetime(data['date'], format='%m/%d/%Y')
     data['temp'] = pd.to_numeric(data['temp'], errors='coerce')
     data = data.set_index('date')
@@ -39,5 +50,7 @@ if __name__ == '__main__':
         print("Please provide a filename as an argument.")
     else:
         filename = sys.argv[1]
-        plot(filename)
+        begin_year = sys.argv[2]
+        end_year = sys.argv[3]
+        plot(filename, begin_year, end_year)
 

@@ -5,6 +5,8 @@ using System.Globalization;
 using TextBox = System.Windows.Forms.TextBox;
 using static System.Net.Mime.MediaTypeNames;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
+using System.Windows.Forms;
+using System.Drawing;
 
 namespace Project_2
 {
@@ -108,6 +110,8 @@ namespace Project_2
         SQLiteDataAdapter adapter;
         private bool newButtonPressed = false;
         private string selectedFile;
+        PictureBox figureBox;
+        Form figureForm;
 
         // Queries for the avg textboxes
         string[] queries = { "SELECT AVG(temp) FROM weather WHERE state = 'WI';",
@@ -195,7 +199,46 @@ namespace Project_2
             adapter.Fill(datatable);
 
             // Display the data in the dataGridView
+            datatable.Columns[0].ReadOnly = true; // weather_id
+            datatable.Columns[3].ReadOnly = true;
             dataGridView1.DataSource = datatable;
+            dataGridView1.Columns[4].DefaultCellStyle.Format = "MM/dd/yyyy";
+            dataGridView1.Columns[4].ValueType = typeof(DateTime);
+
+            //DataGridViewComboBoxColumn column1 = new DataGridViewComboBoxColumn();
+            //column1.DataPropertyName = "Property1";
+            //column1.CellTemplate = new DataGridViewComboBoxCell();
+            //column1.Name = "state";
+            //foreach (US_State state in StateArray.states)
+            //{
+            //    column1.Items.Add(state.Abbreviations);
+            //}
+            //dataGridView1.Columns.Add(column1);
+
+
+
+            //for (int i = 0; i < dataGridView1.Rows.Count; i++)
+            //{
+            //    // Get the values of the year, month, and day columns
+            //    int year = Convert.ToInt32(dataGridView1.Rows[i].Cells[5].Value);
+            //    int month = Convert.ToInt32(dataGridView1.Rows[i].Cells[6].Value);
+            //    int day = Convert.ToInt32(dataGridView1.Rows[i].Cells[7].Value);
+
+            //    if (year > 0 && month > 0 && month < 13 && day > 0 && day < 32)
+            //    {
+            //        // Convert the values to a DateTime object
+            //        DateTime date = new DateTime(year, month, day);
+            //        // Set the value of the date column to the new DateTime object
+            //        dataGridView1.Rows[i].Cells[4].Value = date.ToString("d");
+            //    }
+            //    else
+            //    {
+            //        //Set the value to a default value or leave it empty
+            //        dataGridView1.Rows[i].Cells[4].Value = DBNull.Value;
+            //    }
+            //}
+            //dataGridView1.Columns[4].ReadOnly = true;
+
             dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
 
             // Close the connection to the selected file
@@ -333,15 +376,12 @@ namespace Project_2
                     con.Open();
 
                     // sets date format
-                    string theDate = dateTimePicker1.Value.ToString("MM/dd/yyyy");
+                    string theDate = dateTimePicker1.Value.ToString("M/dd/yyyy");
 
-                    string year = theDate.Substring(6, 4);
-                    string month = theDate.Substring(0, 2);
-                    if (month.StartsWith("0"))
-                    {
-                        month = month.Remove(month.IndexOf("0"), 1);
-                    }
-                    string day = theDate.Substring(3, 2);
+                    string year = theDate.Substring(5, 4);
+                    string month = theDate.Substring(0, 1);
+                    string day = theDate.Substring(2, 2);
+
                     if (day.StartsWith("0"))
                     {
                         day = day.Remove(day.IndexOf("0"), 1);
@@ -421,10 +461,13 @@ namespace Project_2
          */
         private void searchTextBox_TextChanged(object sender, EventArgs e)
         {
+            removeSelectedButton.Visible = true;
             DataView DV = new DataView(datatable);
             // searchtextbox filtering
             DV.RowFilter = string.Format("city LIKE '%{0}%' OR state LIKE '%{1}%' OR year LIKE '%{2}%' OR region LIKE '%{3}%'", searchTextBox.Text, searchTextBox.Text, searchTextBox.Text, searchTextBox.Text);
             dataGridView1.DataSource = DV;
+            dataGridView1.SelectAll();
+            DV.AllowDelete = true;
         }
         private void tempTextBox_KeyPress(object sender, KeyPressEventArgs e)
         {   //what is allowed       //backspace  //hyphen    //period    //enter    //whitespace
@@ -450,8 +493,16 @@ namespace Project_2
         }
         private void editButton_Click(object sender, EventArgs e)
         {
+            //DataGridViewComboBoxColumn stateColumn = (DataGridViewComboBoxColumn)dataGridView1.Columns[2];
+            //foreach (US_State state in StateArray.states)
+            //{
+            //    stateColumn.Items.Add(state.Abbreviations);
+            //}
+
             // Enable editing mode on the DataGridView
             dataGridView1.ReadOnly = false;
+            datatable.Columns[0].ReadOnly = true;
+            datatable.Columns[3].ReadOnly = true;
 
             // Change the text of the Edit button to "Save"
             editButton.Text = "Save";
@@ -464,6 +515,7 @@ namespace Project_2
         }
         private void saveButton_Click(object sender, EventArgs e)
         {
+
             // Disable editing mode on the DataGridView
             dataGridView1.ReadOnly = true;
 
@@ -554,7 +606,6 @@ namespace Project_2
                 // Do not perform delete action
             }
         }
-        // csvImport takes the current db file being displayed in the datagrid as an argument
         private void csvImport()
         {
             // Import from CSV in Project folder and insert into current db/datagrid
@@ -679,6 +730,7 @@ namespace Project_2
                 MessageBox.Show("No rows selected.");
             }
         }
+
         // returns the filename of the db in use
         private string CheckCurrentFile()
         {
@@ -754,23 +806,13 @@ namespace Project_2
                             // check the output and error variables for any messages
                             // Create a new form to display the figure
                             Form figureForm = new Form();
-
-                            // Create a new PictureBox control
                             PictureBox figureBox = new PictureBox();
                             string figurePath = Path.Combine(projectDirectory, "img", "plot.png");
-
-                            // Set the Image property of the PictureBox to the saved figure file
                             figureBox.Image = System.Drawing.Image.FromFile(figurePath);
-
-                            // Set the size of the PictureBox to match the size of the image
                             figureBox.Size = figureBox.Image.Size;
-
-                            // Add the PictureBox control to the form
                             figureForm.Controls.Add(figureBox);
-
+                            figureForm.FormClosed += new FormClosedEventHandler((s, e) => figureForm_FormClosed(s, e, figureBox));
                             figureForm.WindowState = FormWindowState.Maximized;
-
-                            // Show the form
                             figureForm.Show();
                         }
                         else
@@ -793,6 +835,15 @@ namespace Project_2
                 }
             }
         }
+        private void figureForm_FormClosed(object sender, FormClosedEventArgs e, PictureBox figureBox)
+        {
+            if (figureBox != null)
+            {
+                figureBox.Image.Dispose();
+                figureBox.Image = null;
+            }
+            GC.Collect();
+        }
         // Timer to stop the showing of each gif, set for 4 seconds each for each one in the designer
         private void timer1_Tick(object sender, EventArgs e)
         {
@@ -800,6 +851,97 @@ namespace Project_2
             gifBoxCold.Visible = false;
             gifBoxHot.Visible = false;
         }
+        private void dataGridView_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
+
+        {
+            // For some reason the event is getting registered twice, so need to remove then add
+            e.Control.KeyPress -= new KeyPressEventHandler(Control_KeyPress);
+            e.Control.KeyPress += new KeyPressEventHandler(Control_KeyPress);
+        }
+
+        private void Control_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            int columnIndex = dataGridView1.CurrentCell.ColumnIndex;
+            string currentCellValue = dataGridView1.CurrentCell.Value?.ToString() ?? "";
+
+            switch (columnIndex)
+            {
+                case 1:
+                    //KeyPress event for city column 
+                    string city = "" + (char)8 + (char)13 + (char)32;
+                    if (!char.IsLetter(e.KeyChar) && !city.Contains(e.KeyChar))
+                    {
+                        MessageBox.Show("Only letters are allowed in the city column.");
+                        e.Handled = true;
+                    }
+                    break;
+                case 2:  // Doesnt stop user from typing more than 3 characters
+                    //KeyPress event for state column 
+                    string state = "ABCDEFGHIJKLMNOPRSTUVWXYZ" + (char)8 + (char)13 + (char)32;
+                    if (!state.Contains(e.KeyChar) && e.KeyChar != (char)8)
+                    {
+                        MessageBox.Show("Only Capital letters are allowed in the state column.");
+                        e.Handled = true;
+                    }
+
+                    break;
+                case 5:
+                    //KeyPress event for year column 
+                    string year = "0123456789" + (char)8 + (char)13 + (char)32;
+                    if (!year.Contains(e.KeyChar) && e.KeyChar != (char)8)
+                    {
+                        MessageBox.Show("Only 4 numbers are allowed in the year column.");
+                        e.Handled = true;
+                    }
+                    break;
+                case 6:
+                    //KeyPress event for month column 
+                    string month = "0123456789" + (char)8 + (char)13 + (char)32;
+                    if (!month.Contains(e.KeyChar) && e.KeyChar != (char)8)
+                    {
+                        MessageBox.Show("Only Numbers allowed");
+                        e.Handled = true;
+                    }
+                    else if (currentCellValue.Length >= 2)
+                    {
+                        int monthValue = int.Parse(currentCellValue + e.KeyChar);
+                        if (monthValue < 1 || monthValue > 12)
+                        {
+                            MessageBox.Show("Month must be in range 1-12");
+                            e.Handled = true;
+                        }
+                    }
+                    break;
+                case 7:
+                    //KeyPress event for day column 
+                    string day = "0123456789" + (char)8 + (char)13 + (char)32;
+                    if (!day.Contains(e.KeyChar) && e.KeyChar != (char)8)
+                    {
+                        MessageBox.Show("Only Numbers allowed");
+                        e.Handled = true;
+                    }
+
+                    break;
+                case 8:
+                    //KeyPress event for temp column 
+                    string temp = "0123456789" + (char)8 + (char)45 + (char)46 + (char)13 + (char)32;
+                    if (!temp.Contains(e.KeyChar))
+                    {
+                        MessageBox.Show("Only Numbers, decimals, and hyphens allowed");
+                        e.Handled = true;
+                    }
+                    break;
+            }
+        }
+
+        private void removeSelectedButton_Click(object sender, EventArgs e)
+        {
+            confirmButton.PerformClick();
+        }
     }
 }
+ 
+
+
+
 

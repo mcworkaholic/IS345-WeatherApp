@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import sqlite3
 
+
 """
 This script is designed to plot a multiple time series of average monthly maximum temperature by region. 
 It takes in three command line arguments: the filename of the SQLite3 database, the begin year and end year to query the data.
@@ -14,6 +15,7 @@ The script then uses the Matplotlib library to create a multiple time series plo
 """
 
 def plot(filename, begin_year, end_year):
+   
     con = sqlite3.connect(filename)
     sql = """SELECT region, date, year, month, temp, AVG(temp) FROM weather WHERE year >= ? AND year <= ? GROUP BY region, year, month"""
 
@@ -26,7 +28,13 @@ def plot(filename, begin_year, end_year):
     data = data.interpolate()
     
     path = os.path.dirname(os.path.dirname( __file__ ))
-    print(path)
+    #print(path)
+    
+    try:
+        os.remove(path + "\\img\\plot.png")
+    except OSError:
+        pass
+    
     # Create the multiple time series plot
     plt.figure(figsize=(17, 8))
     
@@ -37,12 +45,14 @@ def plot(filename, begin_year, end_year):
         except ValueError:
             pass
     #print(region_data)
+    
     plt.title("Average Monthly Max Temperature By Region")
     plt.xlabel('Year')
     plt.ylabel('Monthly Max Temperature')
     plt.legend(bbox_to_anchor=(1.01, -0.10), loc='lower right')
     plt.tight_layout()
     plt.savefig(path + "\\img\\plot.png")
+    plt.close()
 
 
 if __name__ == '__main__':

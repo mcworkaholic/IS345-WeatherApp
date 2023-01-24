@@ -77,6 +77,7 @@
             this.confirmButton = new System.Windows.Forms.Button();
             this.plotButton = new System.Windows.Forms.Button();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.removeSelectedButton = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.weatherBox.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.refreshBox1)).BeginInit();
@@ -96,6 +97,7 @@
             this.dataGridView1.RowTemplate.Height = 25;
             this.dataGridView1.Size = new System.Drawing.Size(556, 174);
             this.dataGridView1.TabIndex = 0;
+            this.dataGridView1.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.dataGridView_EditingControlShowing);
             this.dataGridView1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dataGridView1_KeyDown);
             // 
             // searchTextBox
@@ -106,7 +108,7 @@
             this.searchTextBox.Location = new System.Drawing.Point(12, 232);
             this.searchTextBox.Name = "searchTextBox";
             this.searchTextBox.PlaceholderText = "Search...";
-            this.searchTextBox.Size = new System.Drawing.Size(100, 23);
+            this.searchTextBox.Size = new System.Drawing.Size(90, 23);
             this.searchTextBox.TabIndex = 1;
             this.toolTip1.SetToolTip(this.searchTextBox, "Filter by city, state, year, or region");
             this.searchTextBox.Visible = false;
@@ -552,7 +554,7 @@
             // 
             this.blankBox.BackColor = System.Drawing.SystemColors.Window;
             this.blankBox.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.blankBox.Location = new System.Drawing.Point(13, 256);
+            this.blankBox.Location = new System.Drawing.Point(20, 258);
             this.blankBox.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
             this.blankBox.Name = "blankBox";
             this.blankBox.Size = new System.Drawing.Size(554, 172);
@@ -596,12 +598,25 @@
             this.timer1.Interval = 4000;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
+            // removeSelectedButton
+            // 
+            this.removeSelectedButton.ForeColor = System.Drawing.Color.Red;
+            this.removeSelectedButton.Location = new System.Drawing.Point(103, 232);
+            this.removeSelectedButton.Name = "removeSelectedButton";
+            this.removeSelectedButton.Size = new System.Drawing.Size(24, 23);
+            this.removeSelectedButton.TabIndex = 18;
+            this.removeSelectedButton.Text = "❌";
+            this.removeSelectedButton.UseVisualStyleBackColor = true;
+            this.removeSelectedButton.Visible = false;
+            this.removeSelectedButton.Click += new System.EventHandler(this.removeSelectedButton_Click);
+            // 
             // WeatherForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(630, 521);
+            this.Controls.Add(this.removeSelectedButton);
             this.Controls.Add(this.plotButton);
             this.Controls.Add(this.confirmButton);
             this.Controls.Add(this.noDataLabel);
@@ -686,5 +701,6 @@
         private PictureBox gifBoxHot;
         private System.Windows.Forms.Timer timer1;
         private PictureBox gifBoxCold;
+        private Button removeSelectedButton;
     }
 }

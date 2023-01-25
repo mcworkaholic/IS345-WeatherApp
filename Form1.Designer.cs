@@ -193,7 +193,7 @@
             this.weatherBox.Size = new System.Drawing.Size(309, 214);
             this.weatherBox.TabIndex = 9;
             this.weatherBox.TabStop = false;
-            this.weatherBox.Text = "Weather Information";
+            this.weatherBox.Text = "Temperature Information";
             // 
             // newButton
             // 
@@ -554,7 +554,7 @@
             // 
             this.blankBox.BackColor = System.Drawing.SystemColors.Window;
             this.blankBox.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.blankBox.Location = new System.Drawing.Point(20, 258);
+            this.blankBox.Location = new System.Drawing.Point(13, 256);
             this.blankBox.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
             this.blankBox.Name = "blankBox";
             this.blankBox.Size = new System.Drawing.Size(554, 172);

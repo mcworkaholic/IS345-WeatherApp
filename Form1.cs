@@ -1,18 +1,12 @@
 using System.Data;
-using System.Diagnostics;
 using System.Data.SQLite;
+using System.Diagnostics;
 using System.Globalization;
 using TextBox = System.Windows.Forms.TextBox;
-using static System.Net.Mime.MediaTypeNames;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
-using System.Windows.Forms;
-using System.Drawing;
 
 namespace Project_2
 {
-
     public partial class WeatherForm : Form
-
     {
         public class US_State
         {
@@ -110,8 +104,6 @@ namespace Project_2
         SQLiteDataAdapter adapter;
         private bool newButtonPressed = false;
         private string selectedFile;
-        PictureBox figureBox;
-        Form figureForm;
 
         // Queries for the avg textboxes
         string[] queries = { "SELECT AVG(temp) FROM weather WHERE state = 'WI';",
@@ -141,6 +133,7 @@ namespace Project_2
                 {
                     MessageBox.Show("This textbox accepts only alphabetical characters");
                     cityTextBox.Text = cityTextBox.Text.Remove(cityTextBox.Text.Length - 1);
+                    cityTextBox.Select(cityTextBox.Text.Length, 0);
                 }
             }
         }
@@ -149,6 +142,7 @@ namespace Project_2
         {
             cityTextBox.Text = string.Empty;
             stateBox.Text = string.Empty;
+            stateBox.SelectedIndex = -1;
             tempTextBox.Text = string.Empty;
         }
         // reloads selected textboxes and their averages
@@ -198,9 +192,12 @@ namespace Project_2
             adapter = new SQLiteDataAdapter(cmd);
             adapter.Fill(datatable);
 
+            // Close the connection to the selected file
+            con.Close();
+
             // Display the data in the dataGridView
             datatable.Columns[0].ReadOnly = true; // weather_id
-            datatable.Columns[3].ReadOnly = true;
+            datatable.Columns[3].ReadOnly = true; // region
             dataGridView1.DataSource = datatable;
             dataGridView1.Columns[4].DefaultCellStyle.Format = "MM/dd/yyyy";
             dataGridView1.Columns[4].ValueType = typeof(DateTime);
@@ -214,8 +211,6 @@ namespace Project_2
             //    column1.Items.Add(state.Abbreviations);
             //}
             //dataGridView1.Columns.Add(column1);
-
-
 
             //for (int i = 0; i < dataGridView1.Rows.Count; i++)
             //{
@@ -240,9 +235,6 @@ namespace Project_2
             //dataGridView1.Columns[4].ReadOnly = true;
 
             dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
-
-            // Close the connection to the selected file
-            con.Close();
         }
         /* The function AVGTextboxes takes in two parameters, an array of TextBox objects and an array of strings (queries). 
          * The purpose of this function is to update the text of the TextBox objects 
@@ -288,8 +280,8 @@ namespace Project_2
             }
         }
         /* SourceButton_Click allows the user to choose the file the data is loaded from.
-         * It defaults to looking in the same directory where the application is running from for .db files.
-         * 'weather.db' is provided with the application.
+         * It defaults to looking in the "Data" directory for .db files.
+         * 'smallweather.db' and 'bulkweather.db' is provided with the application.
          */
         private void SourceButton_Click(object sender, EventArgs e)
         {
@@ -357,27 +349,29 @@ namespace Project_2
 
             // Changes whatever the user enters into title case (princeton -> Princeton) or (san francisco -> San Francisco)
             cityTextBox.Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(cityTextBox.Text);
-            // Check if the temperature entered is within the allowed range
-            if (double.Parse(tempTextBox.Text) < -70 || double.Parse(tempTextBox.Text) > 140)
+            try
             {
-                MessageBox.Show("Temperature out of range (-70 to 140)");
-            }
-            else
-            {
-                try
+                // Check if the temperature entered is within the allowed range
+                if (double.Parse(tempTextBox.Text) < -70 || double.Parse(tempTextBox.Text) > 140)
+                {
+                    MessageBox.Show("Temperature out of range (-70 to 140)");
+                }
+                else if (stateBox.SelectedIndex < 0)
+                {
+                    MessageBox.Show("Please select a state");
+                }
+
+                else
                 {
                     dataGridView1.DataSource = null;
                     dataGridView1.Update();
                     dataGridView1.Refresh();
 
                     // check if a new database was created/new button was pressed and confirmed
-
                     con = new SQLiteConnection(@"data source =" + CheckCurrentFile());
-                    con.Open();
 
                     // sets date format
                     string theDate = dateTimePicker1.Value.ToString("M/dd/yyyy");
-
                     string year = theDate.Substring(5, 4);
                     string month = theDate.Substring(0, 1);
                     string day = theDate.Substring(2, 2);
@@ -386,10 +380,12 @@ namespace Project_2
                     {
                         day = day.Remove(day.IndexOf("0"), 1);
                     }
+
                     //MessageBox.Show("theDate: " + theDate + " " + "year : " + year + " " + " month: " + month + " day: " + day);  -> debugging
 
                     // Create a new SQLiteCommand object with the INSERT INTO statement
                     Query = string.Format("INSERT INTO weather (city, state, region, date, year, month, day, temp) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}')", cityTextBox.Text, stateBox.Text, ReturnRegion(), theDate, year, month, day, tempTextBox.Text);
+                    con.Open();
                     cmd = new SQLiteCommand(Query, con);
                     cmd.ExecuteNonQuery();
 
@@ -410,16 +406,19 @@ namespace Project_2
                     // set the selection mode for the data grid view to cell select
                     dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
 
-
                     LoadData(CheckCurrentFile());
+
+                    // doesn't work. Trying to select the last added record as well as highlight it.
+                    dataGridView1.Rows[dataGridView1.Rows.Count - 2].Selected = true;
+
                     EmptyTextBoxes();
                     ReloadAVGTextBoxes();
                 }
-                catch (FormatException ex)
-                {
-                    // Handle the exception
-                    MessageBox.Show("error : " + ex.Message);
-                }
+            }
+            catch (FormatException)
+            {
+                // Handle the exception
+                MessageBox.Show("Fields must not be blank");
             }
         }
         private void clearButton_Click(object sender, EventArgs e)
@@ -461,9 +460,10 @@ namespace Project_2
          */
         private void searchTextBox_TextChanged(object sender, EventArgs e)
         {
+            // VERY HIGH memory usage with thousands of records
             removeSelectedButton.Visible = true;
             DataView DV = new DataView(datatable);
-            // searchtextbox filtering
+            // searchtextbox db filtering
             DV.RowFilter = string.Format("city LIKE '%{0}%' OR state LIKE '%{1}%' OR year LIKE '%{2}%' OR region LIKE '%{3}%'", searchTextBox.Text, searchTextBox.Text, searchTextBox.Text, searchTextBox.Text);
             dataGridView1.DataSource = DV;
             dataGridView1.SelectAll();
@@ -483,7 +483,6 @@ namespace Project_2
         {
             LoadData(CheckCurrentFile());
             ReloadAVGTextBoxes();
-
         }
         // Homemade refresh button 2, refreshes datagrid to original state
         private void refreshBox1_Click(object sender, EventArgs e)
@@ -501,8 +500,8 @@ namespace Project_2
 
             // Enable editing mode on the DataGridView
             dataGridView1.ReadOnly = false;
-            datatable.Columns[0].ReadOnly = true;
-            datatable.Columns[3].ReadOnly = true;
+            dataGridView1.Columns[0].ReadOnly = true;
+            dataGridView1.Columns[3].ReadOnly = true;
 
             // Change the text of the Edit button to "Save"
             editButton.Text = "Save";
@@ -535,6 +534,7 @@ namespace Project_2
 
             // Set the EditMode back to 'EditProgrammatically'
             dataGridView1.EditMode = DataGridViewEditMode.EditProgrammatically;
+            dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
         }
         // dataGridView1_KeyDown NOT WORKING  *medium priority*
         private void dataGridView1_KeyDown(object sender, KeyEventArgs e)
@@ -587,7 +587,7 @@ namespace Project_2
                 SQLiteConnection con = new SQLiteConnection(@"data source =" + newDbFile);
                 con.Open();
 
-                // Create a table with the same column names as the existing one
+                // Create a table with the same column names, properties as the existing one
                 string createTableQuery = "CREATE TABLE weather (weather_id INTEGER PRIMARY KEY AUTOINCREMENT, city TEXT NOT NULL, state TEXT NOT NULL, region TEXT NOT NULL, date TEXT NOT NULL, year TEXT NOT NULL, month TEXT NOT NULL, day TEXT NOT NULL, temp REAL NOT NULL)";
 
                 // Perform CREATE DDL and close connection
@@ -595,6 +595,7 @@ namespace Project_2
                 cmdCreate.ExecuteNonQuery();
                 con.Close();
 
+                // Buttons
                 EnableAll();
 
                 // Reload the data grid with the new .db file
@@ -859,6 +860,7 @@ namespace Project_2
             e.Control.KeyPress += new KeyPressEventHandler(Control_KeyPress);
         }
 
+        // Input Validation for the datagrid view *Work Needed* 
         private void Control_KeyPress(object sender, KeyPressEventArgs e)
         {
             int columnIndex = dataGridView1.CurrentCell.ColumnIndex;
@@ -933,15 +935,10 @@ namespace Project_2
                     break;
             }
         }
-
+        // *Work Needed* to integrate with the selected/highlighted rows after filtering in the search textbox
         private void removeSelectedButton_Click(object sender, EventArgs e)
         {
             confirmButton.PerformClick();
         }
     }
 }
- 
-
-
-
-

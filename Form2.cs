@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-
-namespace Project_2
+﻿namespace Project_2
 {
     public partial class Form2 : Form
     {
@@ -31,14 +21,15 @@ namespace Project_2
 
         public (string, string) YearRange()
         {
-            string beginYear = beginBox.Text; 
-            string endYear = endBox.Text; 
+            string beginYear = beginBox.Text;
+            string endYear = endBox.Text;
             return (beginYear, endYear);
         }
         private void okButton_Click(object sender, EventArgs e)
         {
             // Range checking
-            if (Int32.Parse(beginBox.Text) > Int32.Parse(endBox.Text)) {
+            if (Int32.Parse(beginBox.Text) > Int32.Parse(endBox.Text))
+            {
                 MessageBox.Show("Beginning year must be less than ending year");
             }
             else

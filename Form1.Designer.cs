@@ -38,6 +38,7 @@
             this.lowButton = new System.Windows.Forms.Button();
             this.closeButton = new System.Windows.Forms.Button();
             this.weatherBox = new System.Windows.Forms.GroupBox();
+            this.errorIcon = new System.Windows.Forms.PictureBox();
             this.newButton = new System.Windows.Forms.Button();
             this.refreshBox1 = new System.Windows.Forms.PictureBox();
             this.sourceButton = new System.Windows.Forms.Button();
@@ -78,8 +79,10 @@
             this.plotButton = new System.Windows.Forms.Button();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.removeSelectedButton = new System.Windows.Forms.Button();
+            this.toolTip2 = new System.Windows.Forms.ToolTip(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.weatherBox.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.errorIcon)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.refreshBox1)).BeginInit();
             this.tempBox.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.gifBoxCold)).BeginInit();
@@ -174,6 +177,7 @@
             // 
             // weatherBox
             // 
+            this.weatherBox.Controls.Add(this.errorIcon);
             this.weatherBox.Controls.Add(this.newButton);
             this.weatherBox.Controls.Add(this.refreshBox1);
             this.weatherBox.Controls.Add(this.sourceButton);
@@ -194,6 +198,17 @@
             this.weatherBox.TabIndex = 9;
             this.weatherBox.TabStop = false;
             this.weatherBox.Text = "Temperature Information";
+            // 
+            // errorIcon
+            // 
+            this.errorIcon.Image = ((System.Drawing.Image)(resources.GetObject("errorIcon.Image")));
+            this.errorIcon.Location = new System.Drawing.Point(87, 46);
+            this.errorIcon.Name = "errorIcon";
+            this.errorIcon.Size = new System.Drawing.Size(16, 16);
+            this.errorIcon.TabIndex = 21;
+            this.errorIcon.TabStop = false;
+            this.toolTip2.SetToolTip(this.errorIcon, "City could not be verified");
+            this.errorIcon.Visible = false;
             // 
             // newButton
             // 
@@ -640,6 +655,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.weatherBox.ResumeLayout(false);
             this.weatherBox.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.errorIcon)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.refreshBox1)).EndInit();
             this.tempBox.ResumeLayout(false);
             this.tempBox.PerformLayout();
@@ -702,5 +718,7 @@
         private System.Windows.Forms.Timer timer1;
         private PictureBox gifBoxCold;
         private Button removeSelectedButton;
+        private PictureBox errorIcon;
+        private ToolTip toolTip2;
     }
 }

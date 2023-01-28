@@ -3,6 +3,9 @@ using System.Data.SQLite;
 using System.Diagnostics;
 using System.Globalization;
 using TextBox = System.Windows.Forms.TextBox;
+using System.Net.Http;
+using System.Threading.Tasks;
+using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace Project_2
 {
@@ -114,7 +117,11 @@ namespace Project_2
             "SELECT AVG(temp) FROM weather WHERE state in ('WI', 'IA', 'SD', 'ND', 'MN');" };
 
         private void cityTextBox_TextChanged(object sender, EventArgs e)
-        {   // regex for characters, spaces, and backspaces
+        {   
+            // removes error icon if user retypes unverifiable city
+            errorIcon.Visible = false;
+
+            // regex for characters, spaces, and backspaces
             string pattern = @"^[A-Za-z.\s+\b]+$";
             if (cityTextBox.Text.Length != 0)
             {
@@ -137,6 +144,31 @@ namespace Project_2
                 }
             }
         }
+
+        private static bool VerifyLocation(string city, string state)
+        {
+            // Calls openweathermap.org's geocoder API to detect whether the city and state are valid
+            // example api call: http://api.openweathermap.org/geo/1.0/direct?q={city name},{state code},{country code}&limit={limit}&appid={API key}
+
+            using (var client = new HttpClient())
+                {
+                    bool valid;
+                    var apiKey = "bdd9cf8717a09ffd505acc42dac63d73";
+                    var response = client.GetAsync($@"http://api.openweathermap.org/geo/1.0/direct?q={city},{state},US&limit=1&appid={apiKey}").Result;
+                    response.EnsureSuccessStatusCode();
+                    var content = response.Content.ReadAsStringAsync().Result;
+                    if(content.Length == 0 || content == "[]")
+                  {
+                    valid = false;
+                  }
+                    else
+                 {
+                    valid = true;
+                 }
+                    return valid;
+                 }
+        }
+        
         // Empties the textboxes where the user adds information in the upper left hand corner of the form
         private void EmptyTextBoxes()
         {
@@ -346,80 +378,84 @@ namespace Project_2
         }
         private void addButton_Click(object sender, EventArgs e)
         {
-
-            // Changes whatever the user enters into title case (princeton -> Princeton) or (san francisco -> San Francisco)
-            cityTextBox.Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(cityTextBox.Text);
-            try
-            {
+                // Changes whatever the user enters into title case (princeton -> Princeton) or (san francisco -> San Francisco)
+                cityTextBox.Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(cityTextBox.Text);
+                try
+                {
                 // Check if the temperature entered is within the allowed range
                 if (double.Parse(tempTextBox.Text) < -70 || double.Parse(tempTextBox.Text) > 140)
-                {
-                    MessageBox.Show("Temperature out of range (-70 to 140)");
-                }
-                else if (stateBox.SelectedIndex < 0)
-                {
-                    MessageBox.Show("Please select a state");
-                }
-
-                else
-                {
-                    dataGridView1.DataSource = null;
-                    dataGridView1.Update();
-                    dataGridView1.Refresh();
-
-                    // check if a new database was created/new button was pressed and confirmed
-                    con = new SQLiteConnection(@"data source =" + CheckCurrentFile());
-
-                    // sets date format
-                    string theDate = dateTimePicker1.Value.ToString("M/dd/yyyy");
-                    string year = theDate.Substring(5, 4);
-                    string month = theDate.Substring(0, 1);
-                    string day = theDate.Substring(2, 2);
-
-                    if (day.StartsWith("0"))
                     {
-                        day = day.Remove(day.IndexOf("0"), 1);
+                        MessageBox.Show("Temperature out of range (-70 to 140)");
                     }
-
-                    //MessageBox.Show("theDate: " + theDate + " " + "year : " + year + " " + " month: " + month + " day: " + day);  -> debugging
-
-                    // Create a new SQLiteCommand object with the INSERT INTO statement
-                    Query = string.Format("INSERT INTO weather (city, state, region, date, year, month, day, temp) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}')", cityTextBox.Text, stateBox.Text, ReturnRegion(), theDate, year, month, day, tempTextBox.Text);
-                    con.Open();
-                    cmd = new SQLiteCommand(Query, con);
-                    cmd.ExecuteNonQuery();
-
-                    // shows the hot gif
-                    if (double.Parse(tempTextBox.Text) > 100 && double.Parse(tempTextBox.Text) < 140)
+                    else if (stateBox.SelectedIndex < 0)
                     {
-                        gifBoxHot.Visible = true;
-                        timer1.Start();
+                        MessageBox.Show("Please select a state");
                     }
-                    // shows the cold gif
-                    else if ((double.Parse(tempTextBox.Text) > -70 && double.Parse(tempTextBox.Text) < 15))
+                    else if (VerifyLocation(cityTextBox.Text, stateBox.GetItemText(stateBox.SelectedItem)) == false)
                     {
-                        gifBoxCold.Visible = true;
-                        timer1.Start();
+                        errorIcon.Visible = true;
                     }
-                    con.Close();
+                    else 
+                    {
+                        // string selected = this.ComboBox.GetItemText(this.ComboBox.SelectedItem);
+                        // messageBox.Show(selected)
+                        dataGridView1.DataSource = null;
+                        dataGridView1.Update();
+                        dataGridView1.Refresh();
 
-                    // set the selection mode for the data grid view to cell select
-                    dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
+                        // check if a new database was created/new button was pressed and confirmed
+                        con = new SQLiteConnection(@"data source =" + CheckCurrentFile());
 
-                    LoadData(CheckCurrentFile());
+                        // sets date format
+                        string theDate = dateTimePicker1.Value.ToString("M/dd/yyyy");
+                        string year = theDate.Substring(5, 4);
+                        string month = theDate.Substring(0, 1);
+                        string day = theDate.Substring(2, 2);
 
-                    // doesn't work. Trying to select the last added record as well as highlight it.
-                    dataGridView1.Rows[dataGridView1.Rows.Count - 2].Selected = true;
+                        if (day.StartsWith("0"))
+                        {
+                            day = day.Remove(day.IndexOf("0"), 1);
+                        }
 
-                    EmptyTextBoxes();
-                    ReloadAVGTextBoxes();
+                        //MessageBox.Show("theDate: " + theDate + " " + "year : " + year + " " + " month: " + month + " day: " + day);  -> debugging
+
+                        // Create a new SQLiteCommand object with the INSERT INTO statement
+                        Query = string.Format("INSERT INTO weather (city, state, region, date, year, month, day, temp) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}')", cityTextBox.Text, stateBox.Text, ReturnRegion(), theDate, year, month, day, tempTextBox.Text);
+                        con.Open();
+                        cmd = new SQLiteCommand(Query, con);
+                        cmd.ExecuteNonQuery();
+
+                        // shows the hot gif
+                        if (double.Parse(tempTextBox.Text) > 100 && double.Parse(tempTextBox.Text) < 140)
+                        {
+                            gifBoxHot.Visible = true;
+                            timer1.Start();
+                        }
+                        // shows the cold gif
+                        else if ((double.Parse(tempTextBox.Text) > -70 && double.Parse(tempTextBox.Text) < 15))
+                        {
+                            gifBoxCold.Visible = true;
+                            timer1.Start();
+                        }
+                        con.Close();
+
+                        // set the selection mode for the data grid view to cell select
+                        dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
+
+                        LoadData(CheckCurrentFile());
+
+                        // doesn't work. Trying to select the last added record as well as highlight it.
+                        dataGridView1.Rows[dataGridView1.Rows.Count - 2].Selected = true;
+
+                        EmptyTextBoxes();
+                        ReloadAVGTextBoxes();
+                    }
                 }
-            }
-            catch (FormatException)
-            {
-                // Handle the exception
-                MessageBox.Show("Fields must not be blank");
-            }
+                catch (FormatException)
+                {
+                    // Handle the exception
+                    MessageBox.Show("Fields must not be blank");
+                }
         }
         private void clearButton_Click(object sender, EventArgs e)
         {
@@ -611,7 +647,7 @@ namespace Project_2
         {
             // Import from CSV in Project folder and insert into current db/datagrid
             OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
+            openFileDialog.Filter = "CSV files (*.csv)|*.csv";
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
                 string filePath = openFileDialog.FileName;

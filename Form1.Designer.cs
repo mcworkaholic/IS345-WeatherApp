@@ -54,9 +54,9 @@
             this.cityTextBox = new System.Windows.Forms.TextBox();
             this.startGroupBox = new System.Windows.Forms.GroupBox();
             this.tempBox = new System.Windows.Forms.GroupBox();
-            this.gifBoxCold = new System.Windows.Forms.PictureBox();
             this.gifBoxHot = new System.Windows.Forms.PictureBox();
             this.regionTextBox = new System.Windows.Forms.TextBox();
+            this.gifBoxCold = new System.Windows.Forms.PictureBox();
             this.regionLabel = new System.Windows.Forms.Label();
             this.mnTextBox = new System.Windows.Forms.TextBox();
             this.ndTextBox = new System.Windows.Forms.TextBox();
@@ -85,8 +85,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.errorIcon)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.refreshBox1)).BeginInit();
             this.tempBox.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.gifBoxCold)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.gifBoxHot)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.gifBoxCold)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.refreshBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.blankBox)).BeginInit();
             this.SuspendLayout();
@@ -113,7 +113,7 @@
             this.searchTextBox.PlaceholderText = "Search...";
             this.searchTextBox.Size = new System.Drawing.Size(90, 23);
             this.searchTextBox.TabIndex = 1;
-            this.toolTip1.SetToolTip(this.searchTextBox, "Filter by city, state, year, or region");
+            this.toolTip1.SetToolTip(this.searchTextBox, "Filter by city, state, or region");
             this.searchTextBox.Visible = false;
             this.searchTextBox.TextChanged += new System.EventHandler(this.searchTextBox_TextChanged);
             // 
@@ -323,16 +323,22 @@
             // 
             // tempTextBox
             // 
+            this.tempTextBox.BackColor = System.Drawing.Color.White;
             this.tempTextBox.Location = new System.Drawing.Point(191, 103);
             this.tempTextBox.Name = "tempTextBox";
+            this.tempTextBox.ReadOnly = true;
             this.tempTextBox.Size = new System.Drawing.Size(71, 23);
             this.tempTextBox.TabIndex = 2;
             this.tempTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.tempTextBox_KeyPress);
             // 
             // cityTextBox
             // 
-            this.cityTextBox.Location = new System.Drawing.Point(162, 22);
+            this.cityTextBox.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
+            this.cityTextBox.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
+            this.cityTextBox.BackColor = System.Drawing.Color.White;
+            this.cityTextBox.Location = new System.Drawing.Point(162, 25);
             this.cityTextBox.Name = "cityTextBox";
+            this.cityTextBox.ReadOnly = true;
             this.cityTextBox.Size = new System.Drawing.Size(100, 23);
             this.cityTextBox.TabIndex = 0;
             this.cityTextBox.TextChanged += new System.EventHandler(this.cityTextBox_TextChanged);
@@ -348,9 +354,9 @@
             // 
             // tempBox
             // 
-            this.tempBox.Controls.Add(this.gifBoxCold);
             this.tempBox.Controls.Add(this.gifBoxHot);
             this.tempBox.Controls.Add(this.regionTextBox);
+            this.tempBox.Controls.Add(this.gifBoxCold);
             this.tempBox.Controls.Add(this.regionLabel);
             this.tempBox.Controls.Add(this.mnTextBox);
             this.tempBox.Controls.Add(this.ndTextBox);
@@ -369,21 +375,10 @@
             this.tempBox.TabStop = false;
             this.tempBox.Text = "Average Temperature";
             // 
-            // gifBoxCold
-            // 
-            this.gifBoxCold.Image = ((System.Drawing.Image)(resources.GetObject("gifBoxCold.Image")));
-            this.gifBoxCold.Location = new System.Drawing.Point(3, 0);
-            this.gifBoxCold.Name = "gifBoxCold";
-            this.gifBoxCold.Size = new System.Drawing.Size(290, 214);
-            this.gifBoxCold.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.gifBoxCold.TabIndex = 18;
-            this.gifBoxCold.TabStop = false;
-            this.gifBoxCold.Visible = false;
-            // 
             // gifBoxHot
             // 
             this.gifBoxHot.Image = ((System.Drawing.Image)(resources.GetObject("gifBoxHot.Image")));
-            this.gifBoxHot.Location = new System.Drawing.Point(0, 0);
+            this.gifBoxHot.Location = new System.Drawing.Point(1, 0);
             this.gifBoxHot.Name = "gifBoxHot";
             this.gifBoxHot.Size = new System.Drawing.Size(293, 214);
             this.gifBoxHot.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
@@ -400,6 +395,17 @@
             this.regionTextBox.Size = new System.Drawing.Size(90, 23);
             this.regionTextBox.TabIndex = 11;
             this.regionTextBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
+            // gifBoxCold
+            // 
+            this.gifBoxCold.Image = ((System.Drawing.Image)(resources.GetObject("gifBoxCold.Image")));
+            this.gifBoxCold.Location = new System.Drawing.Point(1, 0);
+            this.gifBoxCold.Name = "gifBoxCold";
+            this.gifBoxCold.Size = new System.Drawing.Size(290, 214);
+            this.gifBoxCold.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.gifBoxCold.TabIndex = 18;
+            this.gifBoxCold.TabStop = false;
+            this.gifBoxCold.Visible = false;
             // 
             // regionLabel
             // 
@@ -649,7 +655,9 @@
             this.Controls.Add(this.removeButton);
             this.Controls.Add(this.searchTextBox);
             this.Controls.Add(this.dataGridView1);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MaximizeBox = false;
             this.Name = "WeatherForm";
             this.Text = "Temperature Analysis V2.0";
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
@@ -659,8 +667,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.refreshBox1)).EndInit();
             this.tempBox.ResumeLayout(false);
             this.tempBox.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.gifBoxCold)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.gifBoxHot)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.gifBoxCold)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.refreshBox2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.blankBox)).EndInit();
             this.ResumeLayout(false);

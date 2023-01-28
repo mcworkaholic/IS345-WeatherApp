@@ -1,11 +1,9 @@
+using System;
 using System.Data;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.Globalization;
 using TextBox = System.Windows.Forms.TextBox;
-using System.Net.Http;
-using System.Threading.Tasks;
-using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace Project_2
 {
@@ -107,6 +105,7 @@ namespace Project_2
         SQLiteDataAdapter adapter;
         private bool newButtonPressed = false;
         private string selectedFile;
+        DataView DV;
 
         // Queries for the avg textboxes
         string[] queries = { "SELECT AVG(temp) FROM weather WHERE state = 'WI';",
@@ -116,26 +115,17 @@ namespace Project_2
             "SELECT AVG(temp) FROM weather WHERE state = 'MN';",
             "SELECT AVG(temp) FROM weather WHERE state in ('WI', 'IA', 'SD', 'ND', 'MN');" };
 
+
+
         private void cityTextBox_TextChanged(object sender, EventArgs e)
-        {   
-            // removes error icon if user retypes unverifiable city
+        {
+            // Removes error icon if user retypes in citytextbox after unverifiable city
             errorIcon.Visible = false;
 
             // regex for characters, spaces, and backspaces
             string pattern = @"^[A-Za-z.\s+\b]+$";
             if (cityTextBox.Text.Length != 0)
             {
-                // Auto complete functionality for city textbox, MAY IMPLEMENT  *low priority*
-                if (cityTextBox.Text.Length >= 3)
-                {
-                    //SuggestStrings will have the logic to return array of strings either from cache/db
-                    //string[] arr = SuggestStrings(cityTextBox.Text);
-
-                    AutoCompleteStringCollection collection = new AutoCompleteStringCollection();
-                    // collection.AddRange(arr);
-
-                    this.cityTextBox.AutoCompleteCustomSource = collection;
-                }
                 if (!System.Text.RegularExpressions.Regex.IsMatch(cityTextBox.Text, pattern))
                 {
                     MessageBox.Show("This textbox accepts only alphabetical characters");
@@ -144,31 +134,40 @@ namespace Project_2
                 }
             }
         }
-
         private static bool VerifyLocation(string city, string state)
         {
-            // Calls openweathermap.org's geocoder API to detect whether the city and state are valid
+            // Calls openweathermap.org's geocoder API to detect whether the entered city and state are valid
             // example api call: http://api.openweathermap.org/geo/1.0/direct?q={city name},{state code},{country code}&limit={limit}&appid={API key}
-
             using (var client = new HttpClient())
+            {
+                bool valid = false;
+                var apiKey = "bdd9cf8717a09ffd505acc42dac63d73";
+                var response = client.GetAsync($@"http://api.openweathermap.org/geo/1.0/direct?q={city},{state},US&limit=1&appid={apiKey}").Result;
+                if (response.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-                    bool valid;
-                    var apiKey = "bdd9cf8717a09ffd505acc42dac63d73";
-                    var response = client.GetAsync($@"http://api.openweathermap.org/geo/1.0/direct?q={city},{state},US&limit=1&appid={apiKey}").Result;
-                    response.EnsureSuccessStatusCode();
                     var content = response.Content.ReadAsStringAsync().Result;
-                    if(content.Length == 0 || content == "[]")
-                  {
-                    valid = false;
-                  }
+                    if (content.Length == 0 || content == "[]")
+                    {
+                        valid = false;
+                    }
                     else
-                 {
-                    valid = true;
-                 }
+                    {
+                        valid = true;
+                    }
                     return valid;
-                 }
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                {
+                    valid = false;
+                    return valid;
+                }
+                else
+                {
+                    return valid;
+                }
+            }
         }
-        
+
         // Empties the textboxes where the user adds information in the upper left hand corner of the form
         private void EmptyTextBoxes()
         {
@@ -177,6 +176,7 @@ namespace Project_2
             stateBox.SelectedIndex = -1;
             tempTextBox.Text = string.Empty;
         }
+
         // reloads selected textboxes and their averages
         private void ReloadAVGTextBoxes()
         {
@@ -185,7 +185,23 @@ namespace Project_2
         }
         // Enables all buttons that should be shown once data is loaded/ new db is created
         private void EnableAll()
-        {
+        {   // Autocomplete source from values already in database
+            using (con = new SQLiteConnection(@"data source =" + CheckCurrentFile()))
+            {
+                Query = "SELECT DISTINCT city FROM weather;";
+                con.Open();
+                cmd = new SQLiteCommand(Query, con);
+                SQLiteDataReader reader = cmd.ExecuteReader();
+                AutoCompleteStringCollection MyCollection = new AutoCompleteStringCollection();
+                while (reader.Read())
+                {
+                    MyCollection.Add(reader.GetString(0));
+                }
+                cityTextBox.AutoCompleteCustomSource = MyCollection;
+                con.Close();
+            }
+            cityTextBox.ReadOnly = false;
+            tempTextBox.ReadOnly = false;
             startGroupBox.Visible = false;
             blankBox.Visible = false;
             noDataLabel.Visible = false;
@@ -214,7 +230,7 @@ namespace Project_2
             con.Open();
 
             // Create a command object to retrieve all data from the "weather" table
-            Query = "SELECT * FROM weather";
+            Query = "SELECT weather_id, city, state, region, date, temp FROM weather";
             cmd = new SQLiteCommand(Query, con);
 
             // Create a new datatable to store the retrieved data
@@ -229,43 +245,20 @@ namespace Project_2
 
             // Display the data in the dataGridView
             datatable.Columns[0].ReadOnly = true; // weather_id
+            datatable.Columns[0].ColumnName = "ID";
+            datatable.Columns[1].ColumnName = "City";
             datatable.Columns[3].ReadOnly = true; // region
+            datatable.Columns[2].ColumnName = "State";
+            datatable.Columns[3].ColumnName = "Region";
+            datatable.Columns[4].ColumnName = "Date";
+            datatable.Columns[5].ColumnName = "Temperature";
             dataGridView1.DataSource = datatable;
-            dataGridView1.Columns[4].DefaultCellStyle.Format = "MM/dd/yyyy";
-            dataGridView1.Columns[4].ValueType = typeof(DateTime);
-
-            //DataGridViewComboBoxColumn column1 = new DataGridViewComboBoxColumn();
-            //column1.DataPropertyName = "Property1";
-            //column1.CellTemplate = new DataGridViewComboBoxCell();
-            //column1.Name = "state";
-            //foreach (US_State state in StateArray.states)
-            //{
-            //    column1.Items.Add(state.Abbreviations);
-            //}
-            //dataGridView1.Columns.Add(column1);
-
-            //for (int i = 0; i < dataGridView1.Rows.Count; i++)
-            //{
-            //    // Get the values of the year, month, and day columns
-            //    int year = Convert.ToInt32(dataGridView1.Rows[i].Cells[5].Value);
-            //    int month = Convert.ToInt32(dataGridView1.Rows[i].Cells[6].Value);
-            //    int day = Convert.ToInt32(dataGridView1.Rows[i].Cells[7].Value);
-
-            //    if (year > 0 && month > 0 && month < 13 && day > 0 && day < 32)
-            //    {
-            //        // Convert the values to a DateTime object
-            //        DateTime date = new DateTime(year, month, day);
-            //        // Set the value of the date column to the new DateTime object
-            //        dataGridView1.Rows[i].Cells[4].Value = date.ToString("d");
-            //    }
-            //    else
-            //    {
-            //        //Set the value to a default value or leave it empty
-            //        dataGridView1.Rows[i].Cells[4].Value = DBNull.Value;
-            //    }
-            //}
-            //dataGridView1.Columns[4].ReadOnly = true;
-
+            dataGridView1.Columns[0].Width = 25;
+            dataGridView1.Columns[2].Width = 40;
+            dataGridView1.Columns[3].Width = 150;
+            dataGridView1.Columns[4].Width = 80;
+            dataGridView1.Columns[3].DefaultCellStyle.Format = "MM/dd/yyyy";
+            dataGridView1.Columns[3].ValueType = typeof(DateTime);
             dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
         }
         /* The function AVGTextboxes takes in two parameters, an array of TextBox objects and an array of strings (queries). 
@@ -360,6 +353,7 @@ namespace Project_2
         {
             // Close form
             this.Close();
+            this.Dispose();
         }
         private string ReturnRegion()
         {
@@ -378,84 +372,90 @@ namespace Project_2
         }
         private void addButton_Click(object sender, EventArgs e)
         {
-                // Changes whatever the user enters into title case (princeton -> Princeton) or (san francisco -> San Francisco)
-                cityTextBox.Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(cityTextBox.Text);
-                try
-                {
+            // Changes whatever the user enters into title case (princeton -> Princeton) or (san francisco -> San Francisco)
+            cityTextBox.Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(cityTextBox.Text);
+            try
+            {
                 // Check if the temperature entered is within the allowed range
                 if (double.Parse(tempTextBox.Text) < -70 || double.Parse(tempTextBox.Text) > 140)
-                    {
-                        MessageBox.Show("Temperature out of range (-70 to 140)");
-                    }
-                    else if (stateBox.SelectedIndex < 0)
-                    {
-                        MessageBox.Show("Please select a state");
-                    }
-                    else if (VerifyLocation(cityTextBox.Text, stateBox.GetItemText(stateBox.SelectedItem)) == false)
-                    {
-                        errorIcon.Visible = true;
-                    }
-                    else 
-                    {
-                        // string selected = this.ComboBox.GetItemText(this.ComboBox.SelectedItem);
-                        // messageBox.Show(selected)
-                        dataGridView1.DataSource = null;
-                        dataGridView1.Update();
-                        dataGridView1.Refresh();
-
-                        // check if a new database was created/new button was pressed and confirmed
-                        con = new SQLiteConnection(@"data source =" + CheckCurrentFile());
-
-                        // sets date format
-                        string theDate = dateTimePicker1.Value.ToString("M/dd/yyyy");
-                        string year = theDate.Substring(5, 4);
-                        string month = theDate.Substring(0, 1);
-                        string day = theDate.Substring(2, 2);
-
-                        if (day.StartsWith("0"))
-                        {
-                            day = day.Remove(day.IndexOf("0"), 1);
-                        }
-
-                        //MessageBox.Show("theDate: " + theDate + " " + "year : " + year + " " + " month: " + month + " day: " + day);  -> debugging
-
-                        // Create a new SQLiteCommand object with the INSERT INTO statement
-                        Query = string.Format("INSERT INTO weather (city, state, region, date, year, month, day, temp) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}')", cityTextBox.Text, stateBox.Text, ReturnRegion(), theDate, year, month, day, tempTextBox.Text);
-                        con.Open();
-                        cmd = new SQLiteCommand(Query, con);
-                        cmd.ExecuteNonQuery();
-
-                        // shows the hot gif
-                        if (double.Parse(tempTextBox.Text) > 100 && double.Parse(tempTextBox.Text) < 140)
-                        {
-                            gifBoxHot.Visible = true;
-                            timer1.Start();
-                        }
-                        // shows the cold gif
-                        else if ((double.Parse(tempTextBox.Text) > -70 && double.Parse(tempTextBox.Text) < 15))
-                        {
-                            gifBoxCold.Visible = true;
-                            timer1.Start();
-                        }
-                        con.Close();
-
-                        // set the selection mode for the data grid view to cell select
-                        dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
-
-                        LoadData(CheckCurrentFile());
-
-                        // doesn't work. Trying to select the last added record as well as highlight it.
-                        dataGridView1.Rows[dataGridView1.Rows.Count - 2].Selected = true;
-
-                        EmptyTextBoxes();
-                        ReloadAVGTextBoxes();
-                    }
-                }
-                catch (FormatException)
                 {
-                    // Handle the exception
-                    MessageBox.Show("Fields must not be blank");
+                    MessageBox.Show("Temperature out of range (-70 to 140)");
+                    tempTextBox.Clear();
+                    tempTextBox.Focus();
                 }
+                else if (stateBox.SelectedIndex < 0)
+                {
+                    MessageBox.Show("Please select a state");
+                    stateBox.DroppedDown = true;
+                }
+                else if (VerifyLocation(cityTextBox.Text, stateBox.GetItemText(stateBox.SelectedItem)) == false)
+                {
+                    errorIcon.Visible = true;
+                    cityTextBox.Focus();
+                }
+                else
+                {
+                    stateBox.DroppedDown = false;
+                    // string selected = this.ComboBox.GetItemText(this.ComboBox.SelectedItem);
+                    // messageBox.Show(selected)
+                    dataGridView1.DataSource = null;
+                    dataGridView1.Update();
+                    dataGridView1.Refresh();
+
+                    // check if a new database was created/new button was pressed and confirmed
+                    con = new SQLiteConnection(@"data source =" + CheckCurrentFile());
+
+                    // sets date format
+                    string theDate = dateTimePicker1.Value.ToString("M/dd/yyyy");
+                    string year = theDate.Substring(5, 4);
+                    string month = theDate.Substring(0, 1);
+                    string day = theDate.Substring(2, 2);
+
+                    if (day.StartsWith("0"))
+                    {
+                        day = day.Remove(day.IndexOf("0"), 1);
+                    }
+
+                    //MessageBox.Show("theDate: " + theDate + " " + "year : " + year + " " + " month: " + month + " day: " + day);  -> debugging
+
+                    // Create a new SQLiteCommand object with the INSERT INTO statement
+                    Query = string.Format("INSERT INTO weather (city, state, region, date, year, month, day, temp) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}')", cityTextBox.Text, stateBox.Text, ReturnRegion(), theDate, year, month, day, tempTextBox.Text);
+                    con.Open();
+                    cmd = new SQLiteCommand(Query, con);
+                    cmd.ExecuteNonQuery();
+
+                    // shows the hot gif
+                    if (double.Parse(tempTextBox.Text) > 100 && double.Parse(tempTextBox.Text) < 140)
+                    {
+                        gifBoxHot.Visible = true;
+                        timer1.Start();
+                    }
+                    // shows the cold gif
+                    else if ((double.Parse(tempTextBox.Text) > -70 && double.Parse(tempTextBox.Text) < 15))
+                    {
+                        gifBoxCold.Visible = true;
+                        timer1.Start();
+                    }
+                    con.Close();
+
+                    // set the selection mode for the data grid view to cell select
+                    dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
+
+                    LoadData(CheckCurrentFile());
+
+                    // Selects last added record and highlights the ID of the cell
+                    dataGridView1.CurrentCell = dataGridView1[0, datatable.Rows.Count - 1];
+                    dataGridView1.Rows[datatable.Rows.Count - 1].Selected = true;
+
+                    EmptyTextBoxes();
+                    ReloadAVGTextBoxes();
+                }
+            }
+            catch (FormatException)
+            {
+                // Handle the exception
+                MessageBox.Show("Fields must not be blank");
+            }
         }
         private void clearButton_Click(object sender, EventArgs e)
         {
@@ -483,12 +483,12 @@ namespace Project_2
         }
         private void lowButton_Click(object sender, EventArgs e)
         {
-            FilterDataGridView("temp", "min");
+            FilterDataGridView("Temperature", "min");
         }
 
         private void highButton_Click(object sender, EventArgs e)
         {
-            FilterDataGridView("temp", "max");
+            FilterDataGridView("Temperature", "max");
         }
 
         /* searchTextBox_TextChanged is used to filter the datagrid based on what the user enters.
@@ -496,19 +496,25 @@ namespace Project_2
          */
         private void searchTextBox_TextChanged(object sender, EventArgs e)
         {
-            // VERY HIGH memory usage with thousands of records
-            removeSelectedButton.Visible = true;
-            DataView DV = new DataView(datatable);
-            // searchtextbox db filtering
-            DV.RowFilter = string.Format("city LIKE '%{0}%' OR state LIKE '%{1}%' OR year LIKE '%{2}%' OR region LIKE '%{3}%'", searchTextBox.Text, searchTextBox.Text, searchTextBox.Text, searchTextBox.Text);
-            dataGridView1.DataSource = DV;
-            dataGridView1.SelectAll();
-            DV.AllowDelete = true;
+            if (searchTextBox.Text.Length > 0)
+            {
+                removeSelectedButton.Visible = true;
+                DV = new DataView(datatable);
+                // searchtextbox db filtering
+                DV.RowFilter = string.Format("city LIKE '%{0}%' OR state LIKE '%{1}%' OR region LIKE '%{2}%'", searchTextBox.Text, searchTextBox.Text, searchTextBox.Text);
+                dataGridView1.DataSource = DV.ToTable();
+                dataGridView1.SelectAll();
+            }
+            else
+            {
+                removeSelectedButton.Visible = false;
+                dataGridView1.DataSource = datatable;
+            }
         }
         private void tempTextBox_KeyPress(object sender, KeyPressEventArgs e)
         {   //what is allowed       //backspace  //hyphen    //period    //enter    //whitespace
             string st = "0123456789" + (char)8 + (char)45 + (char)46 + (char)13 + (char)32;
-            if (!st.Contains(e.KeyChar))
+            if (!st.Contains(e.KeyChar) && tempTextBox.ReadOnly == false)
             {
                 MessageBox.Show("Please only use numbers, periods, and hyphens");
                 e.Handled = true;
@@ -725,6 +731,7 @@ namespace Project_2
             // Clear statebox combobox
             stateBox.Items.Clear();
             cancelButton.Visible = false;
+            removeSelectedButton.Visible = false;   
         }
 
         private void confirmButton_Click(object sender, EventArgs e)
@@ -739,15 +746,16 @@ namespace Project_2
                 foreach (DataGridViewRow row in selectedRows)
                 {
                     int index = row.Index;
-                    if (dataGridView1.Rows[index].Cells["weather_id"].Value != null)
+                    if (dataGridView1.Rows[index].Cells["ID"].Value != null)
                     {
-                        string id = dataGridView1.Rows[index].Cells["weather_id"].Value.ToString();
+                        string id = dataGridView1.Rows[index].Cells["ID"].Value.ToString();
                         string query = "DELETE FROM weather WHERE weather_id = " + id;
                         cmd = new SQLiteCommand(query, con);
                         adapter.DeleteCommand = cmd;
                         datatable.Rows[index].Delete();
                         adapter.Update(datatable);
                         ReloadAVGTextBoxes();
+                        dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
                     }
                     else
                     {
@@ -974,7 +982,36 @@ namespace Project_2
         // *Work Needed* to integrate with the selected/highlighted rows after filtering in the search textbox
         private void removeSelectedButton_Click(object sender, EventArgs e)
         {
-            confirmButton.PerformClick();
+            con = new SQLiteConnection(@"data source =" + CheckCurrentFile());
+            // Iterate through the selected rows and remove them from the DataTable
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                // Get the DataRow object for the row
+                DataRow dataRow = ((DataRowView)row.DataBoundItem).Row;
+
+                // Define the DELETE statement
+                string deleteSql = "DELETE FROM weather WHERE city LIKE @City AND state LIKE @State AND region LIKE @Region";
+                con.Open();
+                // Create a new SqlCommand object with the DELETE statement and the connection
+                using (SQLiteCommand deleteCommand = new SQLiteCommand(deleteSql, con))
+                {
+                    // Add the ID parameter and set its value to the ID of the current row
+                    deleteCommand.Parameters.AddWithValue("@City", dataRow["City"]);
+                    deleteCommand.Parameters.AddWithValue("@State", dataRow["State"]);
+                    deleteCommand.Parameters.AddWithValue("@Region", dataRow["Region"]);
+
+                    // Execute the DELETE statement
+                    deleteCommand.ExecuteNonQuery();
+                }
+                con.Close();
+                // mark the row as deleted
+                // accept changes to remove the deleted rows
+                datatable.AcceptChanges();
+                adapter.Update(datatable);
+                ReloadAVGTextBoxes();
+                LoadData(CheckCurrentFile());
+
+            }
         }
     }
 }

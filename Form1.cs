@@ -497,15 +497,13 @@ namespace Project_2
                     }
                     con.Close();
 
-                    // set the selection mode for the data grid view to cell select
-                    dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
-
                     LoadData(CheckCurrentFile());
+
+                    dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
 
                     // Selects last added record and highlights the ID of the cell
                     dataGridView1.CurrentCell = dataGridView1[0, datatable.Rows.Count - 1];
                     dataGridView1.Rows[datatable.Rows.Count - 1].Selected = true;
-
                     ReloadAVGTextBoxes();
                 }
             }
@@ -594,6 +592,7 @@ namespace Project_2
         {
 
             // Enable editing mode on the DataGridView
+            dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
             saveButton.Visible = true;
             dataGridView1.ReadOnly = false;
             dataGridView1.Columns[0].ReadOnly = true;
@@ -638,13 +637,13 @@ namespace Project_2
         // Allows the removal of rows from the datagrid
         private void removeButton_Click(object sender, EventArgs e)
         {
+            dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             // Enable editing mode on the DataGridView
             dataGridView1.ReadOnly = false;
             // Change text of the remove button to "Confirm"
             confirmButton.Visible = true;
             // Make cancel button visible so user can exit "removal" mode. 
             cancelButton.Visible = true;
-            dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         }
 
         // newButton_Click creates a new database in the project directory and switches to it
@@ -840,7 +839,6 @@ namespace Project_2
         }
 
         /*
-
         plotButton_Click is a method that calls a python script "tempPlotter.py" located in the "Scripts" directory, which generates a plot/image of the data in the currently selected database and saves it in the "img" directory.
 
         The script requires a working installation of python 3.10 and the libraries specified in the "requirements.txt" file in the "Scripts" directory to be installed.
@@ -850,9 +848,7 @@ namespace Project_2
         Once the script completes execution, the method displays the saved plot/image in a new form/window.
 
         Note that the method assumes that the correct version of python, interpreter and libraries are available and that the permissions for the "img" directory are set to read + write for the script to overwrite the plot image.
-
         */
-
         private void plotButton_Click(object sender, EventArgs e)
         {
             string workingDirectory = Environment.CurrentDirectory;
@@ -961,7 +957,7 @@ namespace Project_2
             {
                 case 1:
                     //KeyPress event for city column 
-                    string city = "" + (char)8 + (char)13 + (char)32;
+                    string city = "" + (char)8 + (char)13 + (char)32 + (char)46;
                     if (!char.IsLetter(e.KeyChar) && !city.Contains(e.KeyChar))
                     {
                         MessageBox.Show("Only letters are allowed in the city column.");
@@ -1032,22 +1028,48 @@ namespace Project_2
 
             }
         }
-        // Work needed here, just boilerplate for now
+        // Data validation for when user clicks save
         private void dataGridView1_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
         {
             if (e.ColumnIndex == dataGridView1.Columns["Date"].Index)
             {
                 dataGridView1.Rows[e.RowIndex].ErrorText = "";
-                string pattern = @"^(1[0-2]|0?[1-9])/(3[01]|[12][0-9]|0?[1-9])/\d{4}$";
-
-                // Don't try to validate the 'new row' until finished  
-                // editing since there 
-                // is no point in validating its initial value. 
+                // Regex for mm/dd//yyyy
+                string pattern = @"^((((0[13578])|([13578])|(1[02]))[\/](([1-9])|([0-2][0-9])|(3[01])))|(((0[469])|([469])|(11))[\/](([1-9])|([0-2][0-9])|(30)))|((2|02)[\/](([1-9])|([0-2][0-9]))))[\/]\d{4}$|^\d{4}$";
                 if (dataGridView1.Rows[e.RowIndex].IsNewRow) { return; }
-                else if (!System.Text.RegularExpressions.Regex.IsMatch(cityTextBox.Text, pattern))
+               
+                else if (e.FormattedValue.ToString() == null || !System.Text.RegularExpressions.Regex.IsMatch(e.FormattedValue.ToString(), pattern))
                 {
                     this.dataGridView1.CancelEdit();
                     dataGridView1.Rows[e.RowIndex].ErrorText = "Date invalid";
+                }
+            }
+            else if (e.ColumnIndex == dataGridView1.Columns["Temperature"].Index)
+            {
+                double temp;
+                if (dataGridView1.Rows[e.RowIndex].IsNewRow) { return; }
+                else if (!double.TryParse(e.FormattedValue.ToString(), out temp) || (temp < -70 || temp > 140))
+                {
+                    this.dataGridView1.CancelEdit();
+                    dataGridView1.Rows[e.RowIndex].ErrorText = "Temp invalid";
+                }
+            }
+            else if (e.ColumnIndex == dataGridView1.Columns["State"].Index)
+            {
+                bool validState = true; 
+                foreach (US_State state in StateArray.states)
+                {
+                    if (state.Abbreviations.Contains(e.FormattedValue.ToString())) {
+                        validState = true;
+                        break;
+                    }
+                    else { validState = false; }
+                }
+                if (dataGridView1.Rows[e.RowIndex].IsNewRow) { return; }
+                else if (validState == false || e.FormattedValue.ToString() == "")
+                {
+                    this.dataGridView1.CancelEdit();
+                    dataGridView1.Rows[e.RowIndex].ErrorText = "State invalid";
                 }
             }
         }

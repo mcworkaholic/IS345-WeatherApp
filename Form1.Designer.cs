@@ -80,6 +80,9 @@
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.removeSelectedButton = new System.Windows.Forms.Button();
             this.toolTip2 = new System.Windows.Forms.ToolTip(this.components);
+            this.saveButton = new System.Windows.Forms.Button();
+            this.copyrightLabel = new System.Windows.Forms.Label();
+            this.removeAllButton = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.weatherBox.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.errorIcon)).BeginInit();
@@ -100,6 +103,7 @@
             this.dataGridView1.RowTemplate.Height = 25;
             this.dataGridView1.Size = new System.Drawing.Size(556, 174);
             this.dataGridView1.TabIndex = 0;
+            this.dataGridView1.CellValidating += new System.Windows.Forms.DataGridViewCellValidatingEventHandler(this.dataGridView1_CellValidating);
             this.dataGridView1.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.dataGridView_EditingControlShowing);
             this.dataGridView1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dataGridView1_KeyDown);
             // 
@@ -130,6 +134,7 @@
             // 
             // editButton
             // 
+            this.editButton.CausesValidation = false;
             this.editButton.FlatAppearance.BorderSize = 0;
             this.editButton.Location = new System.Drawing.Point(297, 232);
             this.editButton.Name = "editButton";
@@ -631,12 +636,46 @@
             this.removeSelectedButton.Visible = false;
             this.removeSelectedButton.Click += new System.EventHandler(this.removeSelectedButton_Click);
             // 
+            // saveButton
+            // 
+            this.saveButton.Location = new System.Drawing.Point(297, 232);
+            this.saveButton.Name = "saveButton";
+            this.saveButton.Size = new System.Drawing.Size(91, 23);
+            this.saveButton.TabIndex = 19;
+            this.saveButton.Text = "Save";
+            this.saveButton.UseVisualStyleBackColor = true;
+            this.saveButton.Visible = false;
+            this.saveButton.Click += new System.EventHandler(this.saveButton_Click_1);
+            // 
+            // copyrightLabel
+            // 
+            this.copyrightLabel.AutoSize = true;
+            this.copyrightLabel.Location = new System.Drawing.Point(216, 435);
+            this.copyrightLabel.Name = "copyrightLabel";
+            this.copyrightLabel.Size = new System.Drawing.Size(158, 15);
+            this.copyrightLabel.TabIndex = 20;
+            this.copyrightLabel.Text = "©️ Weston Evans Spring 2023";
+            // 
+            // removeAllButton
+            // 
+            this.removeAllButton.Location = new System.Drawing.Point(411, 431);
+            this.removeAllButton.Name = "removeAllButton";
+            this.removeAllButton.Size = new System.Drawing.Size(75, 23);
+            this.removeAllButton.TabIndex = 21;
+            this.removeAllButton.Text = "Remove All";
+            this.removeAllButton.UseVisualStyleBackColor = true;
+            this.removeAllButton.Visible = false;
+            this.removeAllButton.Click += new System.EventHandler(this.removeAllButton_Click);
+            // 
             // WeatherForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(630, 521);
+            this.Controls.Add(this.removeAllButton);
+            this.Controls.Add(this.copyrightLabel);
+            this.Controls.Add(this.saveButton);
             this.Controls.Add(this.removeSelectedButton);
             this.Controls.Add(this.plotButton);
             this.Controls.Add(this.confirmButton);
@@ -659,7 +698,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "WeatherForm";
-            this.Text = "Temperature Analysis V2.0";
+            this.Text = "Temperature Analysis V2.0 ";
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.weatherBox.ResumeLayout(false);
             this.weatherBox.PerformLayout();
@@ -728,5 +767,8 @@
         private Button removeSelectedButton;
         private PictureBox errorIcon;
         private ToolTip toolTip2;
+        private Button saveButton;
+        private Label copyrightLabel;
+        private Button removeAllButton;
     }
 }

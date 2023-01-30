@@ -1,3 +1,59 @@
+﻿/**
+ * Author:    Weston Evans
+ * Created:   Week 1
+ * Last Changed: 1.29.2023
+ * Class: IS345 Sec. 54
+ * Purpose: Temperature Analysis Application  
+ * 
+ * USAGE:
+ * 
+ * START: 
+ * 
+ * The user can either start by pressing "select source" to pick one of the provided databases 
+ * or "new" to create an empty one to start adding in data. It is recommended to click "select source" and start with "weathersmall.db" for testing.
+ * The user must then confirm whether or not they wish to open the selected database.
+ * 
+ * INSERTION: 
+ * 
+ * To add in a single record they just have to enter a city(valid), state, temperature(within range), 
+ * and then pick a date. At this point the user can either click clear to reset all textBox values or the "➕" button to add the record.
+ * For BULK insertion, click on the "Bulk ➕" button and pick from the given .csv files that are already formatted for insertion. 
+ * It is recommended to start from new when doing a bulk insert so you can see exactly what values were inserted. 
+ * 
+ * -----------------------------OPTIONS-----------------------------
+ * 
+ * HIGH/LOW: To find the highest/lowest record simply click on the highest/lowest button in the lower left hand corner.
+ * To refresh the view to all records click on the refresh symbol to the right of the previosly mentioned buttons. There is another refresh button near the middle. 
+ * 
+ * RESET: 
+ * 
+ * To reset the form and/or load a different database you can click on reset.
+ * 
+ * EDITING: 
+ * 
+ * To edit or remove a record the user needs to either click on EDIT or REMOVE. 
+ * Once the edit button is clicked, changes can be made after double clicking in the datagridview 
+ * but they must also click on the SAVE button to commit their changes. Note that some columns are read only.
+ * 
+ * To REMOVE a record that button must also be clicked and the datagridview selection mode changes to full row select.
+ * Clicking on CANCEL exits removal mode and changes selection mode to cell select. 
+ * To remove multiple records the ctrl button must be held while clicking, 
+ * and when the user is satisfied they must click on the CONFIRM button to commit their changes.
+ * Clicking on REMOVE ALL removes all records in the current database but does not delete the database. 
+ * DO NOT click on the red ❌ as you search, the functionality is broken for now.
+ * 
+ * SEARCH:
+ * 
+ * To filter just start typing in the search text box. It filters by city, state, or region.
+ * 
+ * PLOT:
+ * 
+ * Please see the comments by the plotButtonClick event handler for specifics on getting it running, 
+ * your luck may vary.
+ * Once working, the user just has to select a range of values for visualization.
+ * 
+ * **/
+
 using System;
 using System.Data;
 using System.Data.SQLite;
@@ -92,7 +148,7 @@ namespace Project_2
             InitializeComponent();
             // Array of all controls whose visibility is toggled in the form on data load and form reset
             controls = new Control[] { addButton, searchTextBox, clearButton, refreshBox2, highButton, lowButton,
-            refreshBox1, bulkInsertButton, resetButton, editButton, plotButton, removeButton};
+            refreshBox1, bulkInsertButton, resetButton, editButton, plotButton, removeButton, removeAllButton};
         }
         // GLOBALS, to be altered by the application
 
@@ -185,7 +241,10 @@ namespace Project_2
         }
         // Enables all buttons that should be shown once data is loaded/ new db is created
         private void EnableAll()
-        {   // Autocomplete source from values already in database
+        {
+            dataGridView1.ReadOnly = true;
+
+            // Autocomplete source from values already in database
             using (con = new SQLiteConnection(@"data source =" + CheckCurrentFile()))
             {
                 Query = "SELECT DISTINCT city FROM weather;";
@@ -230,7 +289,7 @@ namespace Project_2
             con.Open();
 
             // Create a command object to retrieve all data from the "weather" table
-            Query = "SELECT weather_id, city, state, region, date, temp FROM weather";
+            Query = "SELECT weather_id AS ID, city AS City, state AS State, region as Region, date AS Date, temp AS Temperature FROM weather";
             cmd = new SQLiteCommand(Query, con);
 
             // Create a new datatable to store the retrieved data
@@ -447,7 +506,6 @@ namespace Project_2
                     dataGridView1.CurrentCell = dataGridView1[0, datatable.Rows.Count - 1];
                     dataGridView1.Rows[datatable.Rows.Count - 1].Selected = true;
 
-                    EmptyTextBoxes();
                     ReloadAVGTextBoxes();
                 }
             }
@@ -534,24 +592,12 @@ namespace Project_2
         }
         private void editButton_Click(object sender, EventArgs e)
         {
-            //DataGridViewComboBoxColumn stateColumn = (DataGridViewComboBoxColumn)dataGridView1.Columns[2];
-            //foreach (US_State state in StateArray.states)
-            //{
-            //    stateColumn.Items.Add(state.Abbreviations);
-            //}
 
             // Enable editing mode on the DataGridView
+            saveButton.Visible = true;
             dataGridView1.ReadOnly = false;
             dataGridView1.Columns[0].ReadOnly = true;
             dataGridView1.Columns[3].ReadOnly = true;
-
-            // Change the text of the Edit button to "Save"
-            editButton.Text = "Save";
-
-            // Add a click event handler to the Save button to handle saving the changes, and remove the editbuttonclick event handler
-            editButton.Click -= editButton_Click;
-            editButton.Click += saveButton_Click;
-
             dataGridView1.EditMode = DataGridViewEditMode.EditOnEnter;
         }
         private void saveButton_Click(object sender, EventArgs e)
@@ -731,7 +777,7 @@ namespace Project_2
             // Clear statebox combobox
             stateBox.Items.Clear();
             cancelButton.Visible = false;
-            removeSelectedButton.Visible = false;   
+            removeSelectedButton.Visible = false;
         }
 
         private void confirmButton_Click(object sender, EventArgs e)
@@ -749,8 +795,8 @@ namespace Project_2
                     if (dataGridView1.Rows[index].Cells["ID"].Value != null)
                     {
                         string id = dataGridView1.Rows[index].Cells["ID"].Value.ToString();
-                        string query = "DELETE FROM weather WHERE weather_id = " + id;
-                        cmd = new SQLiteCommand(query, con);
+                        string statement = "DELETE FROM weather WHERE weather_id = " + id;
+                        cmd = new SQLiteCommand(statement, con);
                         adapter.DeleteCommand = cmd;
                         datatable.Rows[index].Delete();
                         adapter.Update(datatable);
@@ -882,6 +928,7 @@ namespace Project_2
         }
         private void figureForm_FormClosed(object sender, FormClosedEventArgs e, PictureBox figureBox)
         {
+            // releases plot.png from the process/memory so that another dataset can be plotted
             if (figureBox != null)
             {
                 figureBox.Image.Dispose();
@@ -904,7 +951,7 @@ namespace Project_2
             e.Control.KeyPress += new KeyPressEventHandler(Control_KeyPress);
         }
 
-        // Input Validation for the datagrid view *Work Needed* 
+        // Key Press input validation for the datagrid view 
         private void Control_KeyPress(object sender, KeyPressEventArgs e)
         {
             int columnIndex = dataGridView1.CurrentCell.ColumnIndex;
@@ -926,54 +973,26 @@ namespace Project_2
                     string state = "ABCDEFGHIJKLMNOPRSTUVWXYZ" + (char)8 + (char)13 + (char)32;
                     if (!state.Contains(e.KeyChar) && e.KeyChar != (char)8)
                     {
-                        MessageBox.Show("Only Capital letters are allowed in the state column.");
+                        MessageBox.Show("Only capital letters are allowed in the state column.");
                         e.Handled = true;
                     }
 
+                    break;
+                case 4:
+                    //KeyPress event for date column 
+                    string date = "0123456789/" + (char)8 + (char)13 + (char)32;
+                    if (!date.Contains(e.KeyChar))
+                    {
+                        MessageBox.Show("Only numbers and slashes allowed");
+                        e.Handled = true;
+                    }
                     break;
                 case 5:
-                    //KeyPress event for year column 
-                    string year = "0123456789" + (char)8 + (char)13 + (char)32;
-                    if (!year.Contains(e.KeyChar) && e.KeyChar != (char)8)
-                    {
-                        MessageBox.Show("Only 4 numbers are allowed in the year column.");
-                        e.Handled = true;
-                    }
-                    break;
-                case 6:
-                    //KeyPress event for month column 
-                    string month = "0123456789" + (char)8 + (char)13 + (char)32;
-                    if (!month.Contains(e.KeyChar) && e.KeyChar != (char)8)
-                    {
-                        MessageBox.Show("Only Numbers allowed");
-                        e.Handled = true;
-                    }
-                    else if (currentCellValue.Length >= 2)
-                    {
-                        int monthValue = int.Parse(currentCellValue + e.KeyChar);
-                        if (monthValue < 1 || monthValue > 12)
-                        {
-                            MessageBox.Show("Month must be in range 1-12");
-                            e.Handled = true;
-                        }
-                    }
-                    break;
-                case 7:
-                    //KeyPress event for day column 
-                    string day = "0123456789" + (char)8 + (char)13 + (char)32;
-                    if (!day.Contains(e.KeyChar) && e.KeyChar != (char)8)
-                    {
-                        MessageBox.Show("Only Numbers allowed");
-                        e.Handled = true;
-                    }
-
-                    break;
-                case 8:
                     //KeyPress event for temp column 
                     string temp = "0123456789" + (char)8 + (char)45 + (char)46 + (char)13 + (char)32;
                     if (!temp.Contains(e.KeyChar))
                     {
-                        MessageBox.Show("Only Numbers, decimals, and hyphens allowed");
+                        MessageBox.Show("Only numbers, decimals, and hyphens allowed");
                         e.Handled = true;
                     }
                     break;
@@ -1013,5 +1032,58 @@ namespace Project_2
 
             }
         }
+        // Work needed here, just boilerplate for now
+        private void dataGridView1_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
+        {
+            if (e.ColumnIndex == dataGridView1.Columns["Date"].Index)
+            {
+                dataGridView1.Rows[e.RowIndex].ErrorText = "";
+                string pattern = @"^(1[0-2]|0?[1-9])/(3[01]|[12][0-9]|0?[1-9])/\d{4}$";
+
+                // Don't try to validate the 'new row' until finished  
+                // editing since there 
+                // is no point in validating its initial value. 
+                if (dataGridView1.Rows[e.RowIndex].IsNewRow) { return; }
+                else if (!System.Text.RegularExpressions.Regex.IsMatch(cityTextBox.Text, pattern))
+                {
+                    this.dataGridView1.CancelEdit();
+                    dataGridView1.Rows[e.RowIndex].ErrorText = "Date invalid";
+                }
+            }
+        }
+
+        private void saveButton_Click_1(object sender, EventArgs e)
+        {
+            saveButton.Visible = false;
+            // Disable editing mode on the DataGridView
+            dataGridView1.ReadOnly = true;
+            // Create a new command builder
+            SQLiteCommandBuilder cmdBuilder = new SQLiteCommandBuilder(adapter);
+            // Update the database with the changes made to the DataTable
+            adapter.Update(datatable);
+            ReloadAVGTextBoxes();
+            // Set the EditMode back to 'EditProgrammatically'
+            dataGridView1.EditMode = DataGridViewEditMode.EditProgrammatically;
+            dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
+        }
+
+        private void removeAllButton_Click(object sender, EventArgs e)
+        {
+            con = new SQLiteConnection(@"data source =" + CheckCurrentFile());
+            string deleteSql = "DELETE FROM weather;";
+            con.Open();
+            // Create a new SqlCommand object with the DELETE statement and the connection
+            using (SQLiteCommand deleteCommand = new SQLiteCommand(deleteSql, con))
+              {
+                deleteCommand.ExecuteNonQuery();
+              }
+                con.Close();
+                // mark the row as deleted
+                // accept changes to remove the deleted rows
+                datatable.AcceptChanges();
+                adapter.Update(datatable);
+                ReloadAVGTextBoxes();
+                LoadData(CheckCurrentFile());
+            }
     }
 }

@@ -161,6 +161,7 @@ namespace Project_2
         private bool newButtonPressed = false;
         private string selectedFile;
         DataView DV;
+        bool isValid = true;
 
         // Queries for the avg textboxes
         string[] queries = { "SELECT AVG(temp) FROM weather WHERE state = 'WI';",
@@ -944,7 +945,7 @@ namespace Project_2
                         e.Handled = true;
                     }
                     break;
-                case 2:  // Doesnt stop user from typing more than 3 characters
+                case 2:  
                     //KeyPress event for state column 
                     string state = "ABCDEFGHIJKLMNOPRSTUVWXYZ" + (char)8 + (char)13 + (char)32;
                     if (!state.Contains(e.KeyChar) && e.KeyChar != (char)8)
@@ -1008,122 +1009,61 @@ namespace Project_2
 
             }
         }
-        // Data validation for when user clicks save
-        private void dataGridView1_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
-        {
-            if (e.ColumnIndex == dataGridView1.Columns["Date"].Index)
-            {
-                dataGridView1.Rows[e.RowIndex].ErrorText = "";
-                // Regex for mm/dd//yyyy
-                string pattern = @"^((((0[13578])|([13578])|(1[02]))[\/](([1-9])|([0-2][0-9])|(3[01])))|(((0[469])|([469])|(11))[\/](([1-9])|([0-2][0-9])|(30)))|((2|02)[\/](([1-9])|([0-2][0-9]))))[\/]\d{4}$|^\d{4}$";
-                if (e.FormattedValue.ToString() == null || !System.Text.RegularExpressions.Regex.IsMatch(e.FormattedValue.ToString(), pattern))
-                {
-                    this.dataGridView1.CancelEdit();
-                    dataGridView1.Rows[e.RowIndex].ErrorText = "Date invalid";
-                }
-            }
-            else if (e.ColumnIndex == dataGridView1.Columns["Temperature"].Index)
-            {
-                double temp;
-                if (!double.TryParse(e.FormattedValue.ToString(), out temp) || (temp < -70 || temp > 140))
-                {
-                    this.dataGridView1.CancelEdit();
-                    dataGridView1.Rows[e.RowIndex].ErrorText = "Temp invalid";
-                }
-            }
-            else if (e.ColumnIndex == dataGridView1.Columns["City"].Index || e.ColumnIndex == dataGridView1.Columns["State"].Index)
-            {
-                bool isValid = true;
-                if (e.ColumnIndex == dataGridView1.Columns["State"].Index)
-                {
-                    string state = e.FormattedValue.ToString();
-                    string city = dataGridView1.Rows[e.RowIndex].Cells[1].Value.ToString();
-                    foreach (US_State item in StateArray.states)
-                    {
-                        if (item.Abbreviations.Contains(state))
-                        {
-                            isValid = true;
-                            break;
-                        }
-                        else
-                        {
-                            isValid = false;
-                            this.dataGridView1.CancelEdit();
-                        }
-                    }
-                }
-                else if (e.ColumnIndex == dataGridView1.Columns["City"].Index)
-                {
-                    string city = e.FormattedValue.ToString();
-                    string stateString = dataGridView1.Rows[e.RowIndex].Cells[2].Value.ToString();
-
-                    string abbreviation = "St.";
-                    if (city != null && city.Contains(abbreviation))
-                    {
-                        city = city.Replace(abbreviation, "Saint");
-                    }
-
-                    if (city != null && stateString != null && VerifyLocation(city, stateString) == false)
-                    {
-                        dataGridView1.Rows[e.RowIndex].ErrorText = "Location invalid";
-                        isValid = false;
-                    }
-                    else
-                    {
-                        dataGridView1.Rows[e.RowIndex].ErrorText = "";
-                        isValid = true;
-                    }
-                }
-                if (!isValid)
-                {
-                    this.dataGridView1.CancelEdit();
-                }
-            }
-        }
-
+       
+        // Needs override for when user adds/edits unincorporated communities
         private void saveButton_Click_1(object sender, EventArgs e)
         {
-            bool isValid = true;
-            // Loop through all rows in the DataGridView
-            foreach (DataGridViewRow row in dataGridView1.Rows)
+            // Get the last row edited
+            int lastRowEdited = dataGridView1.CurrentCell.RowIndex;
+            double temp;
+            // Check the last row edited for errors
+            string city = dataGridView1.Rows[lastRowEdited].Cells["City"].Value.ToString();
+            string state = dataGridView1.Rows[lastRowEdited].Cells["State"].Value.ToString();
+            string tempString = dataGridView1.Rows[lastRowEdited].Cells["Temperature"].Value.ToString();
+            string date = dataGridView1.Rows[lastRowEdited].Cells["Date"].Value.ToString();
+
+            // Regex for mm/dd//yyyy
+            string pattern = @"^((((0[13578])|([13578])|(1[02]))[\/](([1-9])|([0-2][0-9])|(3[01])))|(((0[469])|([469])|(11))[\/](([1-9])|([0-2][0-9])|(30)))|((2|02)[\/](([1-9])|([0-2][0-9]))))[\/]\d{4}$|^\d{4}$";
+
+            string abbreviation = "St.";
+            if (city != null && city.Contains(abbreviation))
             {
-                // Skip the header row
-                if (row.IsNewRow) continue;
-
-                string city = row.Cells["City"].Value.ToString();
-                string state = row.Cells["State"].Value.ToString();
-
-                string abbreviation = "St.";
-                if (city != null && city.Contains(abbreviation))
-                {
-                    city = city.Replace(abbreviation, "Saint");
-                }
-
-                if (city != null && state != null && VerifyLocation(city, state) == false)
-                {
-                    row.ErrorText = "Location invalid";
-                    isValid = false;
-                }
-                else
-                {
-                    row.ErrorText = "";
-                    isValid = true;
-                }
+                city = city.Replace(abbreviation, "Saint");
             }
 
-            // If all rows are valid, save the changes
-            if (isValid == false)
+            if (city != null && state != null && VerifyLocation(city, state) == false)
             {
+                dataGridView1.Rows[lastRowEdited].ErrorText = "Location could not be verified";
+                MessageBox.Show("Location could not be verified. Please correct the errors in the DataGridView before saving.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            else if (date == null || !System.Text.RegularExpressions.Regex.IsMatch(date, pattern))
+            {
+                dataGridView1.Rows[lastRowEdited].ErrorText = "Date must be in mm/dd/yyyy format";
+                MessageBox.Show("Date must be in mm/dd/yyyy format. Please correct the errors in the DataGridView before saving.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            else if (!double.TryParse(tempString, out temp) || (temp < -70 || temp > 140))
+            {
+                dataGridView1.Rows[lastRowEdited].ErrorText = "Temperature must be between -70 & 140";
+                MessageBox.Show(" Temperature must be between -70 & 140°F. Please correct the errors in the DataGridView before saving.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            //else if (isValid == false)
+            //{
+            //    dataGridView1.Rows[lastRowEdited].ErrorText = "Location could not be verified";
+            //    MessageBox.Show("Location could not be verified. Please correct the errors in the DataGridView before saving.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            //    return;
+            //}
+            else
+            {
+                isValid = true;
+                dataGridView1.Rows[lastRowEdited].ErrorText = "";
                 saveButton.Visible = false;
                 // Disable editing mode on the DataGridView
                 dataGridView1.ReadOnly = true;
-                dataGridView1.CancelEdit();
-            }
-            else if (isValid == true)
-            {
-                saveButton.Visible = false;
-                // Disable editing mode on the DataGridView
-                dataGridView1.ReadOnly = true;
+                // Create a new command builder
                 SQLiteCommandBuilder cmdBuilder = new SQLiteCommandBuilder(adapter);
                 // Update the database with the changes made to the DataTable
                 adapter.Update(datatable);
@@ -1133,6 +1073,7 @@ namespace Project_2
                 dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
             }
         }
+
         private void removeAllButton_Click(object sender, EventArgs e)
         {
             con = new SQLiteConnection(@"data source =" + CheckCurrentFile());

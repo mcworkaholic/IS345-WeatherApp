@@ -54,7 +54,6 @@
  * 
  * **/
 
-using System;
 using System.Data;
 using System.Data.SQLite;
 using System.Diagnostics;
@@ -190,19 +189,25 @@ namespace Project_2
                 }
             }
         }
-        private static bool VerifyLocation(string city, string state)
+        private bool VerifyLocation(string city, string state)
         {
-            // Calls openweathermap.org's geocoder API to detect whether the entered city and state are valid
-            // example api call: http://api.openweathermap.org/geo/1.0/direct?q={city name},{state code},{country code}&limit={limit}&appid={API key}
-            using (var client = new HttpClient())
+            bool valid;
+            string workingDirectory = Environment.CurrentDirectory;
+            string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "/Data";
+            using (SQLiteConnection con = new SQLiteConnection(@"data source =" + Path.Combine(projectDirectory, "cities.db")))
             {
-                bool valid = false;
-                var apiKey = "bdd9cf8717a09ffd505acc42dac63d73";
-                var response = client.GetAsync($@"http://api.openweathermap.org/geo/1.0/direct?q={city},{state},US&limit=1&appid={apiKey}").Result;
-                if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                try
                 {
-                    var content = response.Content.ReadAsStringAsync().Result;
-                    if (content.Length == 0 || content == "[]")
+                    con.Open();
+                    Query = "SELECT US_CITIES.CITY, US_STATES.STATE_CODE FROM US_CITIES" +
+                        " INNER JOIN US_STATES " +
+                        "ON US_CITIES.ID_STATE = US_STATES.ID " +
+                        "WHERE US_CITIES.CITY = @CITY AND US_STATES.STATE_CODE = @STATE;";
+                    SQLiteCommand cmd = new SQLiteCommand(Query, con);
+                    cmd.Parameters.AddWithValue("@CITY", city);
+                    cmd.Parameters.AddWithValue("@STATE", state);
+                    var result = cmd.ExecuteScalar();
+                    if (result == null)
                     {
                         valid = false;
                     }
@@ -212,13 +217,11 @@ namespace Project_2
                     }
                     return valid;
                 }
-                else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                // Exception handling
+                catch (Exception ex)
                 {
                     valid = false;
-                    return valid;
-                }
-                else
-                {
+                    MessageBox.Show("Error: " + ex.Message);
                     return valid;
                 }
             }
@@ -433,6 +436,17 @@ namespace Project_2
         {
             // Changes whatever the user enters into title case (princeton -> Princeton) or (san francisco -> San Francisco)
             cityTextBox.Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(cityTextBox.Text);
+            string abbreviation = "St.";
+            if (cityTextBox.Text.Contains(abbreviation))
+            {
+                string text = cityTextBox.Text;
+                text = text.Replace(abbreviation, "Saint");
+                cityTextBox.Text = text;
+            }
+            else
+            {
+                // Do nothing
+            }
             try
             {
                 // Check if the temperature entered is within the allowed range
@@ -447,11 +461,12 @@ namespace Project_2
                     MessageBox.Show("Please select a state");
                     stateBox.DroppedDown = true;
                 }
-                else if (VerifyLocation(cityTextBox.Text, stateBox.GetItemText(stateBox.SelectedItem)) == false)
+                else if (VerifyLocation(cityTextBox.Text, stateBox.GetItemText(stateBox.SelectedItem).ToString()) == false)
                 {
                     errorIcon.Visible = true;
                     cityTextBox.Focus();
                 }
+
                 else
                 {
                     stateBox.DroppedDown = false;
@@ -598,41 +613,6 @@ namespace Project_2
             dataGridView1.Columns[0].ReadOnly = true;
             dataGridView1.Columns[3].ReadOnly = true;
             dataGridView1.EditMode = DataGridViewEditMode.EditOnEnter;
-        }
-        private void saveButton_Click(object sender, EventArgs e)
-        {
-
-            // Disable editing mode on the DataGridView
-            dataGridView1.ReadOnly = true;
-
-            // Create a new command builder
-            SQLiteCommandBuilder cmdBuilder = new SQLiteCommandBuilder(adapter);
-
-            // Update the database with the changes made to the DataTable
-            adapter.Update(datatable);
-            ReloadAVGTextBoxes();
-
-            // Change the text of the Save button back to "Edit"
-            editButton.Text = "Edit";
-
-            // Remove the click event handler for the Save button, add the editbutton click event handler
-            editButton.Click -= saveButton_Click;
-            editButton.Click += editButton_Click;
-
-            // Set the EditMode back to 'EditProgrammatically'
-            dataGridView1.EditMode = DataGridViewEditMode.EditProgrammatically;
-            dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
-        }
-        // dataGridView1_KeyDown NOT WORKING  *medium priority*
-        private void dataGridView1_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (dataGridView1.CurrentCell.IsInEditMode && e.KeyCode == Keys.Enter)
-            {
-                dataGridView1.EndEdit();
-                // Save the changes in the datagrid here
-                // Debug
-                MessageBox.Show("You pressed enter!");
-            }
         }
         // Allows the removal of rows from the datagrid
         private void removeButton_Click(object sender, EventArgs e)
@@ -1036,9 +1016,7 @@ namespace Project_2
                 dataGridView1.Rows[e.RowIndex].ErrorText = "";
                 // Regex for mm/dd//yyyy
                 string pattern = @"^((((0[13578])|([13578])|(1[02]))[\/](([1-9])|([0-2][0-9])|(3[01])))|(((0[469])|([469])|(11))[\/](([1-9])|([0-2][0-9])|(30)))|((2|02)[\/](([1-9])|([0-2][0-9]))))[\/]\d{4}$|^\d{4}$";
-                if (dataGridView1.Rows[e.RowIndex].IsNewRow) { return; }
-               
-                else if (e.FormattedValue.ToString() == null || !System.Text.RegularExpressions.Regex.IsMatch(e.FormattedValue.ToString(), pattern))
+                if (e.FormattedValue.ToString() == null || !System.Text.RegularExpressions.Regex.IsMatch(e.FormattedValue.ToString(), pattern))
                 {
                     this.dataGridView1.CancelEdit();
                     dataGridView1.Rows[e.RowIndex].ErrorText = "Date invalid";
@@ -1047,48 +1025,114 @@ namespace Project_2
             else if (e.ColumnIndex == dataGridView1.Columns["Temperature"].Index)
             {
                 double temp;
-                if (dataGridView1.Rows[e.RowIndex].IsNewRow) { return; }
-                else if (!double.TryParse(e.FormattedValue.ToString(), out temp) || (temp < -70 || temp > 140))
+                if (!double.TryParse(e.FormattedValue.ToString(), out temp) || (temp < -70 || temp > 140))
                 {
                     this.dataGridView1.CancelEdit();
                     dataGridView1.Rows[e.RowIndex].ErrorText = "Temp invalid";
                 }
             }
-            else if (e.ColumnIndex == dataGridView1.Columns["State"].Index)
+            else if (e.ColumnIndex == dataGridView1.Columns["City"].Index || e.ColumnIndex == dataGridView1.Columns["State"].Index)
             {
-                bool validState = true; 
-                foreach (US_State state in StateArray.states)
+                bool isValid = true;
+                if (e.ColumnIndex == dataGridView1.Columns["State"].Index)
                 {
-                    if (state.Abbreviations.Contains(e.FormattedValue.ToString())) {
-                        validState = true;
-                        break;
+                    string state = e.FormattedValue.ToString();
+                    string city = dataGridView1.Rows[e.RowIndex].Cells[1].Value.ToString();
+                    foreach (US_State item in StateArray.states)
+                    {
+                        if (item.Abbreviations.Contains(state))
+                        {
+                            isValid = true;
+                            break;
+                        }
+                        else
+                        {
+                            isValid = false;
+                            this.dataGridView1.CancelEdit();
+                        }
                     }
-                    else { validState = false; }
                 }
-                if (dataGridView1.Rows[e.RowIndex].IsNewRow) { return; }
-                else if (validState == false || e.FormattedValue.ToString() == "")
+                else if (e.ColumnIndex == dataGridView1.Columns["City"].Index)
+                {
+                    string city = e.FormattedValue.ToString();
+                    string stateString = dataGridView1.Rows[e.RowIndex].Cells[2].Value.ToString();
+
+                    string abbreviation = "St.";
+                    if (city != null && city.Contains(abbreviation))
+                    {
+                        city = city.Replace(abbreviation, "Saint");
+                    }
+
+                    if (city != null && stateString != null && VerifyLocation(city, stateString) == false)
+                    {
+                        dataGridView1.Rows[e.RowIndex].ErrorText = "Location invalid";
+                        isValid = false;
+                    }
+                    else
+                    {
+                        dataGridView1.Rows[e.RowIndex].ErrorText = "";
+                        isValid = true;
+                    }
+                }
+                if (!isValid)
                 {
                     this.dataGridView1.CancelEdit();
-                    dataGridView1.Rows[e.RowIndex].ErrorText = "State invalid";
                 }
             }
         }
 
         private void saveButton_Click_1(object sender, EventArgs e)
         {
-            saveButton.Visible = false;
-            // Disable editing mode on the DataGridView
-            dataGridView1.ReadOnly = true;
-            // Create a new command builder
-            SQLiteCommandBuilder cmdBuilder = new SQLiteCommandBuilder(adapter);
-            // Update the database with the changes made to the DataTable
-            adapter.Update(datatable);
-            ReloadAVGTextBoxes();
-            // Set the EditMode back to 'EditProgrammatically'
-            dataGridView1.EditMode = DataGridViewEditMode.EditProgrammatically;
-            dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
-        }
+            bool isValid = true;
+            // Loop through all rows in the DataGridView
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                // Skip the header row
+                if (row.IsNewRow) continue;
 
+                string city = row.Cells["City"].Value.ToString();
+                string state = row.Cells["State"].Value.ToString();
+
+                string abbreviation = "St.";
+                if (city != null && city.Contains(abbreviation))
+                {
+                    city = city.Replace(abbreviation, "Saint");
+                }
+
+                if (city != null && state != null && VerifyLocation(city, state) == false)
+                {
+                    row.ErrorText = "Location invalid";
+                    isValid = false;
+                }
+                else
+                {
+                    row.ErrorText = "";
+                    isValid = true;
+                }
+            }
+
+            // If all rows are valid, save the changes
+            if (isValid == false)
+            {
+                saveButton.Visible = false;
+                // Disable editing mode on the DataGridView
+                dataGridView1.ReadOnly = true;
+                dataGridView1.CancelEdit();
+            }
+            else if (isValid == true)
+            {
+                saveButton.Visible = false;
+                // Disable editing mode on the DataGridView
+                dataGridView1.ReadOnly = true;
+                SQLiteCommandBuilder cmdBuilder = new SQLiteCommandBuilder(adapter);
+                // Update the database with the changes made to the DataTable
+                adapter.Update(datatable);
+                ReloadAVGTextBoxes();
+                // Set the EditMode back to 'EditProgrammatically'
+                dataGridView1.EditMode = DataGridViewEditMode.EditProgrammatically;
+                dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
+            }
+        }
         private void removeAllButton_Click(object sender, EventArgs e)
         {
             con = new SQLiteConnection(@"data source =" + CheckCurrentFile());
@@ -1096,16 +1140,16 @@ namespace Project_2
             con.Open();
             // Create a new SqlCommand object with the DELETE statement and the connection
             using (SQLiteCommand deleteCommand = new SQLiteCommand(deleteSql, con))
-              {
+            {
                 deleteCommand.ExecuteNonQuery();
-              }
-                con.Close();
-                // mark the row as deleted
-                // accept changes to remove the deleted rows
-                datatable.AcceptChanges();
-                adapter.Update(datatable);
-                ReloadAVGTextBoxes();
-                LoadData(CheckCurrentFile());
             }
+            con.Close();
+            // mark the row as deleted
+            // accept changes to remove the deleted rows
+            datatable.AcceptChanges();
+            adapter.Update(datatable);
+            ReloadAVGTextBoxes();
+            LoadData(CheckCurrentFile());
+        }
     }
 }

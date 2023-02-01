@@ -46,7 +46,7 @@ def plot(filename, begin_year, end_year):
             pass
     #print(region_data)
     
-    plt.title("Average Monthly Max Temperature By Region")
+    plt.title("Monthly Max Temperature By Region")
     plt.xlabel('Year')
     plt.ylabel('Monthly Max Temperature')
     plt.legend(bbox_to_anchor=(1.01, -0.10), loc='lower right')

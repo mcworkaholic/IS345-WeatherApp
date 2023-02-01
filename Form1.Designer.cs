@@ -38,10 +38,10 @@
             this.lowButton = new System.Windows.Forms.Button();
             this.closeButton = new System.Windows.Forms.Button();
             this.weatherBox = new System.Windows.Forms.GroupBox();
-            this.errorIcon = new System.Windows.Forms.PictureBox();
             this.newButton = new System.Windows.Forms.Button();
-            this.refreshBox1 = new System.Windows.Forms.PictureBox();
+            this.currentButton = new System.Windows.Forms.Button();
             this.sourceButton = new System.Windows.Forms.Button();
+            this.errorIcon = new System.Windows.Forms.PictureBox();
             this.dateLabel = new System.Windows.Forms.Label();
             this.tempLabel = new System.Windows.Forms.Label();
             this.stateLabel = new System.Windows.Forms.Label();
@@ -52,7 +52,6 @@
             this.stateBox = new System.Windows.Forms.ComboBox();
             this.tempTextBox = new System.Windows.Forms.TextBox();
             this.cityTextBox = new System.Windows.Forms.TextBox();
-            this.startGroupBox = new System.Windows.Forms.GroupBox();
             this.tempBox = new System.Windows.Forms.GroupBox();
             this.gifBoxHot = new System.Windows.Forms.PictureBox();
             this.regionTextBox = new System.Windows.Forms.TextBox();
@@ -86,7 +85,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.weatherBox.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.errorIcon)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.refreshBox1)).BeginInit();
             this.tempBox.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.gifBoxHot)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.gifBoxCold)).BeginInit();
@@ -116,6 +114,7 @@
             this.searchTextBox.PlaceholderText = "Search...";
             this.searchTextBox.Size = new System.Drawing.Size(90, 23);
             this.searchTextBox.TabIndex = 1;
+            this.searchTextBox.TabStop = false;
             this.toolTip1.SetToolTip(this.searchTextBox, "Filter by city, state, or region");
             this.searchTextBox.Visible = false;
             this.searchTextBox.TextChanged += new System.EventHandler(this.searchTextBox_TextChanged);
@@ -150,6 +149,7 @@
             this.highButton.Name = "highButton";
             this.highButton.Size = new System.Drawing.Size(115, 23);
             this.highButton.TabIndex = 5;
+            this.highButton.TabStop = false;
             this.highButton.Text = "Highest Temp 🔥";
             this.highButton.UseVisualStyleBackColor = true;
             this.highButton.Visible = false;
@@ -161,6 +161,7 @@
             this.lowButton.Name = "lowButton";
             this.lowButton.Size = new System.Drawing.Size(115, 23);
             this.lowButton.TabIndex = 6;
+            this.lowButton.TabStop = false;
             this.lowButton.Text = "Lowest Temp  ❄";
             this.lowButton.UseVisualStyleBackColor = true;
             this.lowButton.Visible = false;
@@ -175,16 +176,17 @@
             this.closeButton.Name = "closeButton";
             this.closeButton.Size = new System.Drawing.Size(82, 23);
             this.closeButton.TabIndex = 8;
+            this.closeButton.TabStop = false;
             this.closeButton.Text = "Close   ❌";
             this.closeButton.UseVisualStyleBackColor = false;
             this.closeButton.Click += new System.EventHandler(this.closeButton_Click);
             // 
             // weatherBox
             // 
-            this.weatherBox.Controls.Add(this.errorIcon);
             this.weatherBox.Controls.Add(this.newButton);
-            this.weatherBox.Controls.Add(this.refreshBox1);
+            this.weatherBox.Controls.Add(this.currentButton);
             this.weatherBox.Controls.Add(this.sourceButton);
+            this.weatherBox.Controls.Add(this.errorIcon);
             this.weatherBox.Controls.Add(this.dateLabel);
             this.weatherBox.Controls.Add(this.tempLabel);
             this.weatherBox.Controls.Add(this.stateLabel);
@@ -195,7 +197,6 @@
             this.weatherBox.Controls.Add(this.stateBox);
             this.weatherBox.Controls.Add(this.tempTextBox);
             this.weatherBox.Controls.Add(this.cityTextBox);
-            this.weatherBox.Controls.Add(this.startGroupBox);
             this.weatherBox.Location = new System.Drawing.Point(12, 12);
             this.weatherBox.Name = "weatherBox";
             this.weatherBox.Size = new System.Drawing.Size(309, 214);
@@ -203,45 +204,31 @@
             this.weatherBox.TabStop = false;
             this.weatherBox.Text = "Temperature Information";
             // 
-            // errorIcon
-            // 
-            this.errorIcon.Image = ((System.Drawing.Image)(resources.GetObject("errorIcon.Image")));
-            this.errorIcon.Location = new System.Drawing.Point(87, 46);
-            this.errorIcon.Name = "errorIcon";
-            this.errorIcon.Size = new System.Drawing.Size(16, 16);
-            this.errorIcon.TabIndex = 21;
-            this.errorIcon.TabStop = false;
-            this.toolTip2.SetToolTip(this.errorIcon, "City could not be verified");
-            this.errorIcon.Visible = false;
-            // 
             // newButton
             // 
-            this.newButton.Location = new System.Drawing.Point(162, 185);
+            this.newButton.Location = new System.Drawing.Point(147, 179);
             this.newButton.Name = "newButton";
             this.newButton.Size = new System.Drawing.Size(75, 23);
             this.newButton.TabIndex = 19;
+            this.newButton.TabStop = false;
             this.newButton.Text = "New";
             this.newButton.UseVisualStyleBackColor = true;
             this.newButton.Click += new System.EventHandler(this.newButton_Click);
             // 
-            // refreshBox1
+            // currentButton
             // 
-            this.refreshBox1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.refreshBox1.Enabled = false;
-            this.refreshBox1.Image = ((System.Drawing.Image)(resources.GetObject("refreshBox1.Image")));
-            this.refreshBox1.Location = new System.Drawing.Point(267, 188);
-            this.refreshBox1.MaximumSize = new System.Drawing.Size(23, 23);
-            this.refreshBox1.Name = "refreshBox1";
-            this.refreshBox1.Size = new System.Drawing.Size(20, 20);
-            this.refreshBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.refreshBox1.TabIndex = 12;
-            this.refreshBox1.TabStop = false;
-            this.refreshBox1.Visible = false;
-            this.refreshBox1.Click += new System.EventHandler(this.refreshBox1_Click);
+            this.currentButton.Location = new System.Drawing.Point(16, 92);
+            this.currentButton.Name = "currentButton";
+            this.currentButton.Size = new System.Drawing.Size(74, 23);
+            this.currentButton.TabIndex = 20;
+            this.currentButton.Text = "Get";
+            this.currentButton.UseVisualStyleBackColor = true;
+            this.currentButton.Visible = false;
+            this.currentButton.Click += new System.EventHandler(this.currentButton_Click);
             // 
             // sourceButton
             // 
-            this.sourceButton.Location = new System.Drawing.Point(42, 185);
+            this.sourceButton.Location = new System.Drawing.Point(27, 179);
             this.sourceButton.Name = "sourceButton";
             this.sourceButton.Size = new System.Drawing.Size(114, 23);
             this.sourceButton.TabIndex = 18;
@@ -249,10 +236,21 @@
             this.sourceButton.UseVisualStyleBackColor = true;
             this.sourceButton.Click += new System.EventHandler(this.SourceButton_Click);
             // 
+            // errorIcon
+            // 
+            this.errorIcon.Image = ((System.Drawing.Image)(resources.GetObject("errorIcon.Image")));
+            this.errorIcon.Location = new System.Drawing.Point(96, 50);
+            this.errorIcon.Name = "errorIcon";
+            this.errorIcon.Size = new System.Drawing.Size(16, 16);
+            this.errorIcon.TabIndex = 21;
+            this.errorIcon.TabStop = false;
+            this.toolTip2.SetToolTip(this.errorIcon, "City could not be verified");
+            this.errorIcon.Visible = false;
+            // 
             // dateLabel
             // 
             this.dateLabel.AutoSize = true;
-            this.dateLabel.Location = new System.Drawing.Point(125, 149);
+            this.dateLabel.Location = new System.Drawing.Point(134, 153);
             this.dateLabel.Name = "dateLabel";
             this.dateLabel.Size = new System.Drawing.Size(31, 15);
             this.dateLabel.TabIndex = 17;
@@ -261,7 +259,7 @@
             // tempLabel
             // 
             this.tempLabel.AutoSize = true;
-            this.tempLabel.Location = new System.Drawing.Point(114, 106);
+            this.tempLabel.Location = new System.Drawing.Point(123, 110);
             this.tempLabel.Name = "tempLabel";
             this.tempLabel.Size = new System.Drawing.Size(71, 15);
             this.tempLabel.TabIndex = 16;
@@ -270,7 +268,7 @@
             // stateLabel
             // 
             this.stateLabel.AutoSize = true;
-            this.stateLabel.Location = new System.Drawing.Point(123, 66);
+            this.stateLabel.Location = new System.Drawing.Point(132, 70);
             this.stateLabel.Name = "stateLabel";
             this.stateLabel.Size = new System.Drawing.Size(33, 15);
             this.stateLabel.TabIndex = 15;
@@ -279,7 +277,7 @@
             // cityLabel
             // 
             this.cityLabel.AutoSize = true;
-            this.cityLabel.Location = new System.Drawing.Point(125, 25);
+            this.cityLabel.Location = new System.Drawing.Point(134, 29);
             this.cityLabel.Name = "cityLabel";
             this.cityLabel.Size = new System.Drawing.Size(28, 15);
             this.cityLabel.TabIndex = 14;
@@ -287,10 +285,11 @@
             // 
             // clearButton
             // 
-            this.clearButton.Location = new System.Drawing.Point(6, 120);
+            this.clearButton.Location = new System.Drawing.Point(15, 133);
             this.clearButton.Name = "clearButton";
             this.clearButton.Size = new System.Drawing.Size(75, 23);
             this.clearButton.TabIndex = 13;
+            this.clearButton.TabStop = false;
             this.clearButton.Text = "Clear";
             this.clearButton.UseVisualStyleBackColor = true;
             this.clearButton.Visible = false;
@@ -298,7 +297,7 @@
             // 
             // addButton
             // 
-            this.addButton.Location = new System.Drawing.Point(6, 43);
+            this.addButton.Location = new System.Drawing.Point(15, 47);
             this.addButton.Name = "addButton";
             this.addButton.Size = new System.Drawing.Size(75, 23);
             this.addButton.TabIndex = 12;
@@ -309,7 +308,7 @@
             // 
             // dateTimePicker1
             // 
-            this.dateTimePicker1.Location = new System.Drawing.Point(162, 143);
+            this.dateTimePicker1.Location = new System.Drawing.Point(171, 147);
             this.dateTimePicker1.Name = "dateTimePicker1";
             this.dateTimePicker1.Size = new System.Drawing.Size(100, 23);
             this.dateTimePicker1.TabIndex = 11;
@@ -320,7 +319,7 @@
             this.stateBox.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             this.stateBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.stateBox.FormattingEnabled = true;
-            this.stateBox.Location = new System.Drawing.Point(162, 63);
+            this.stateBox.Location = new System.Drawing.Point(171, 67);
             this.stateBox.Name = "stateBox";
             this.stateBox.Size = new System.Drawing.Size(100, 23);
             this.stateBox.TabIndex = 11;
@@ -328,7 +327,7 @@
             // tempTextBox
             // 
             this.tempTextBox.BackColor = System.Drawing.Color.White;
-            this.tempTextBox.Location = new System.Drawing.Point(191, 103);
+            this.tempTextBox.Location = new System.Drawing.Point(200, 107);
             this.tempTextBox.Name = "tempTextBox";
             this.tempTextBox.ReadOnly = true;
             this.tempTextBox.Size = new System.Drawing.Size(71, 23);
@@ -340,21 +339,12 @@
             this.cityTextBox.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
             this.cityTextBox.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
             this.cityTextBox.BackColor = System.Drawing.Color.White;
-            this.cityTextBox.Location = new System.Drawing.Point(162, 25);
+            this.cityTextBox.Location = new System.Drawing.Point(171, 29);
             this.cityTextBox.Name = "cityTextBox";
             this.cityTextBox.ReadOnly = true;
             this.cityTextBox.Size = new System.Drawing.Size(100, 23);
             this.cityTextBox.TabIndex = 0;
             this.cityTextBox.TextChanged += new System.EventHandler(this.cityTextBox_TextChanged);
-            // 
-            // startGroupBox
-            // 
-            this.startGroupBox.Location = new System.Drawing.Point(29, 167);
-            this.startGroupBox.Name = "startGroupBox";
-            this.startGroupBox.Size = new System.Drawing.Size(221, 47);
-            this.startGroupBox.TabIndex = 20;
-            this.startGroupBox.TabStop = false;
-            this.startGroupBox.Text = "Start";
             // 
             // tempBox
             // 
@@ -382,7 +372,7 @@
             // gifBoxHot
             // 
             this.gifBoxHot.Image = ((System.Drawing.Image)(resources.GetObject("gifBoxHot.Image")));
-            this.gifBoxHot.Location = new System.Drawing.Point(1, 0);
+            this.gifBoxHot.Location = new System.Drawing.Point(0, 0);
             this.gifBoxHot.Name = "gifBoxHot";
             this.gifBoxHot.Size = new System.Drawing.Size(293, 214);
             this.gifBoxHot.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
@@ -393,17 +383,18 @@
             // regionTextBox
             // 
             this.regionTextBox.BackColor = System.Drawing.SystemColors.Window;
-            this.regionTextBox.Location = new System.Drawing.Point(181, 121);
+            this.regionTextBox.Location = new System.Drawing.Point(98, 22);
             this.regionTextBox.Name = "regionTextBox";
             this.regionTextBox.ReadOnly = true;
             this.regionTextBox.Size = new System.Drawing.Size(90, 23);
             this.regionTextBox.TabIndex = 11;
+            this.regionTextBox.TabStop = false;
             this.regionTextBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // gifBoxCold
             // 
             this.gifBoxCold.Image = ((System.Drawing.Image)(resources.GetObject("gifBoxCold.Image")));
-            this.gifBoxCold.Location = new System.Drawing.Point(1, 0);
+            this.gifBoxCold.Location = new System.Drawing.Point(3, 0);
             this.gifBoxCold.Name = "gifBoxCold";
             this.gifBoxCold.Size = new System.Drawing.Size(290, 214);
             this.gifBoxCold.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
@@ -414,7 +405,7 @@
             // regionLabel
             // 
             this.regionLabel.AutoSize = true;
-            this.regionLabel.Location = new System.Drawing.Point(203, 95);
+            this.regionLabel.Location = new System.Drawing.Point(48, 25);
             this.regionLabel.Name = "regionLabel";
             this.regionLabel.Size = new System.Drawing.Size(44, 15);
             this.regionLabel.TabIndex = 10;
@@ -428,6 +419,7 @@
             this.mnTextBox.ReadOnly = true;
             this.mnTextBox.Size = new System.Drawing.Size(100, 23);
             this.mnTextBox.TabIndex = 9;
+            this.mnTextBox.TabStop = false;
             this.mnTextBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // ndTextBox
@@ -438,6 +430,7 @@
             this.ndTextBox.ReadOnly = true;
             this.ndTextBox.Size = new System.Drawing.Size(100, 23);
             this.ndTextBox.TabIndex = 8;
+            this.ndTextBox.TabStop = false;
             this.ndTextBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // sdTextBox
@@ -448,6 +441,7 @@
             this.sdTextBox.ReadOnly = true;
             this.sdTextBox.Size = new System.Drawing.Size(100, 23);
             this.sdTextBox.TabIndex = 7;
+            this.sdTextBox.TabStop = false;
             this.sdTextBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // iaTextBox
@@ -458,6 +452,7 @@
             this.iaTextBox.ReadOnly = true;
             this.iaTextBox.Size = new System.Drawing.Size(100, 23);
             this.iaTextBox.TabIndex = 6;
+            this.iaTextBox.TabStop = false;
             this.iaTextBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // wiTextBox
@@ -468,6 +463,7 @@
             this.wiTextBox.ReadOnly = true;
             this.wiTextBox.Size = new System.Drawing.Size(100, 23);
             this.wiTextBox.TabIndex = 5;
+            this.wiTextBox.TabStop = false;
             this.wiTextBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // wiLabel
@@ -559,6 +555,7 @@
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(75, 23);
             this.cancelButton.TabIndex = 13;
+            this.cancelButton.TabStop = false;
             this.cancelButton.Text = "Cancel";
             this.cancelButton.UseVisualStyleBackColor = true;
             this.cancelButton.Visible = false;
@@ -570,6 +567,7 @@
             this.bulkInsertButton.Name = "bulkInsertButton";
             this.bulkInsertButton.Size = new System.Drawing.Size(75, 23);
             this.bulkInsertButton.TabIndex = 14;
+            this.bulkInsertButton.TabStop = false;
             this.bulkInsertButton.Text = "Bulk ➕";
             this.bulkInsertButton.UseVisualStyleBackColor = true;
             this.bulkInsertButton.Visible = false;
@@ -613,7 +611,8 @@
             this.plotButton.Name = "plotButton";
             this.plotButton.Size = new System.Drawing.Size(75, 23);
             this.plotButton.TabIndex = 17;
-            this.plotButton.Text = "Plot";
+            this.plotButton.TabStop = false;
+            this.plotButton.Text = "Plot 📈";
             this.plotButton.UseVisualStyleBackColor = true;
             this.plotButton.Visible = false;
             this.plotButton.Click += new System.EventHandler(this.plotButton_Click);
@@ -630,6 +629,7 @@
             this.removeSelectedButton.Name = "removeSelectedButton";
             this.removeSelectedButton.Size = new System.Drawing.Size(24, 23);
             this.removeSelectedButton.TabIndex = 18;
+            this.removeSelectedButton.TabStop = false;
             this.removeSelectedButton.Text = "❌";
             this.removeSelectedButton.UseVisualStyleBackColor = true;
             this.removeSelectedButton.Visible = false;
@@ -641,7 +641,7 @@
             this.saveButton.Name = "saveButton";
             this.saveButton.Size = new System.Drawing.Size(91, 23);
             this.saveButton.TabIndex = 19;
-            this.saveButton.Text = "Save";
+            this.saveButton.Text = "Save  💾";
             this.saveButton.UseVisualStyleBackColor = true;
             this.saveButton.Visible = false;
             this.saveButton.Click += new System.EventHandler(this.saveButton_Click_1);
@@ -661,6 +661,7 @@
             this.removeAllButton.Name = "removeAllButton";
             this.removeAllButton.Size = new System.Drawing.Size(75, 23);
             this.removeAllButton.TabIndex = 21;
+            this.removeAllButton.TabStop = false;
             this.removeAllButton.Text = "Remove All";
             this.removeAllButton.UseVisualStyleBackColor = true;
             this.removeAllButton.Visible = false;
@@ -703,7 +704,6 @@
             this.weatherBox.ResumeLayout(false);
             this.weatherBox.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.errorIcon)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.refreshBox1)).EndInit();
             this.tempBox.ResumeLayout(false);
             this.tempBox.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.gifBoxHot)).EndInit();
@@ -734,13 +734,10 @@
         private Label cityLabel;
         private Button clearButton;
         private Button addButton;
-        private Button sourceButton;
         private TextBox cityTextBox;
         private ToolTip toolTip1;
         private ComboBox stateBox;
         private PictureBox refreshBox2;
-        private PictureBox refreshBox1;
-        private Button newButton;
         private Label wiLabel;
         private Label iaLabel;
         private Label sdLabel;
@@ -756,7 +753,6 @@
         private Button resetButton;
         private Button cancelButton;
         private Button bulkInsertButton;
-        private GroupBox startGroupBox;
         private PictureBox blankBox;
         private Label noDataLabel;
         private Button confirmButton;
@@ -770,5 +766,8 @@
         private Button saveButton;
         private Label copyrightLabel;
         private Button removeAllButton;
+        private Button currentButton;
+        private Button newButton;
+        private Button sourceButton;
     }
 }

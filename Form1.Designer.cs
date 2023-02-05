@@ -39,7 +39,7 @@
             this.closeButton = new System.Windows.Forms.Button();
             this.weatherBox = new System.Windows.Forms.GroupBox();
             this.newButton = new System.Windows.Forms.Button();
-            this.currentButton = new System.Windows.Forms.Button();
+            this.getButton = new System.Windows.Forms.Button();
             this.sourceButton = new System.Windows.Forms.Button();
             this.errorIcon = new System.Windows.Forms.PictureBox();
             this.dateLabel = new System.Windows.Forms.Label();
@@ -53,9 +53,12 @@
             this.tempTextBox = new System.Windows.Forms.TextBox();
             this.cityTextBox = new System.Windows.Forms.TextBox();
             this.tempBox = new System.Windows.Forms.GroupBox();
-            this.gifBoxHot = new System.Windows.Forms.PictureBox();
+            this.panel = new System.Windows.Forms.Panel();
+            this.tempLabel2 = new System.Windows.Forms.Label();
+            this.descriptionLabel = new System.Windows.Forms.Label();
+            this.iconBox = new System.Windows.Forms.PictureBox();
+            this.panel1 = new System.Windows.Forms.Panel();
             this.regionTextBox = new System.Windows.Forms.TextBox();
-            this.gifBoxCold = new System.Windows.Forms.PictureBox();
             this.regionLabel = new System.Windows.Forms.Label();
             this.mnTextBox = new System.Windows.Forms.TextBox();
             this.ndTextBox = new System.Windows.Forms.TextBox();
@@ -86,8 +89,8 @@
             this.weatherBox.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.errorIcon)).BeginInit();
             this.tempBox.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.gifBoxHot)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.gifBoxCold)).BeginInit();
+            this.panel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.iconBox)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.refreshBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.blankBox)).BeginInit();
             this.SuspendLayout();
@@ -184,7 +187,7 @@
             // weatherBox
             // 
             this.weatherBox.Controls.Add(this.newButton);
-            this.weatherBox.Controls.Add(this.currentButton);
+            this.weatherBox.Controls.Add(this.getButton);
             this.weatherBox.Controls.Add(this.sourceButton);
             this.weatherBox.Controls.Add(this.errorIcon);
             this.weatherBox.Controls.Add(this.dateLabel);
@@ -215,16 +218,16 @@
             this.newButton.UseVisualStyleBackColor = true;
             this.newButton.Click += new System.EventHandler(this.newButton_Click);
             // 
-            // currentButton
+            // getButton
             // 
-            this.currentButton.Location = new System.Drawing.Point(16, 92);
-            this.currentButton.Name = "currentButton";
-            this.currentButton.Size = new System.Drawing.Size(74, 23);
-            this.currentButton.TabIndex = 20;
-            this.currentButton.Text = "Get";
-            this.currentButton.UseVisualStyleBackColor = true;
-            this.currentButton.Visible = false;
-            this.currentButton.Click += new System.EventHandler(this.currentButton_Click);
+            this.getButton.Location = new System.Drawing.Point(16, 92);
+            this.getButton.Name = "getButton";
+            this.getButton.Size = new System.Drawing.Size(74, 23);
+            this.getButton.TabIndex = 20;
+            this.getButton.Text = "Get";
+            this.getButton.UseVisualStyleBackColor = true;
+            this.getButton.Visible = false;
+            this.getButton.Click += new System.EventHandler(this.getButton_Click);
             // 
             // sourceButton
             // 
@@ -348,9 +351,9 @@
             // 
             // tempBox
             // 
-            this.tempBox.Controls.Add(this.gifBoxHot);
+            this.tempBox.Controls.Add(this.panel);
+            this.tempBox.Controls.Add(this.panel1);
             this.tempBox.Controls.Add(this.regionTextBox);
-            this.tempBox.Controls.Add(this.gifBoxCold);
             this.tempBox.Controls.Add(this.regionLabel);
             this.tempBox.Controls.Add(this.mnTextBox);
             this.tempBox.Controls.Add(this.ndTextBox);
@@ -369,16 +372,59 @@
             this.tempBox.TabStop = false;
             this.tempBox.Text = "Average Temperature";
             // 
-            // gifBoxHot
+            // panel
             // 
-            this.gifBoxHot.Image = ((System.Drawing.Image)(resources.GetObject("gifBoxHot.Image")));
-            this.gifBoxHot.Location = new System.Drawing.Point(0, 0);
-            this.gifBoxHot.Name = "gifBoxHot";
-            this.gifBoxHot.Size = new System.Drawing.Size(293, 214);
-            this.gifBoxHot.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.gifBoxHot.TabIndex = 12;
-            this.gifBoxHot.TabStop = false;
-            this.gifBoxHot.Visible = false;
+            this.panel.Controls.Add(this.tempLabel2);
+            this.panel.Controls.Add(this.descriptionLabel);
+            this.panel.Controls.Add(this.iconBox);
+            this.panel.Location = new System.Drawing.Point(143, 47);
+            this.panel.Name = "panel";
+            this.panel.Size = new System.Drawing.Size(144, 162);
+            this.panel.TabIndex = 25;
+            // 
+            // tempLabel2
+            // 
+            this.tempLabel2.AutoSize = true;
+            this.tempLabel2.Font = new System.Drawing.Font("Bahnschrift", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.tempLabel2.Location = new System.Drawing.Point(54, 117);
+            this.tempLabel2.Name = "tempLabel2";
+            this.tempLabel2.Size = new System.Drawing.Size(36, 16);
+            this.tempLabel2.TabIndex = 24;
+            this.tempLabel2.Text = "temp";
+            this.tempLabel2.Visible = false;
+            // 
+            // descriptionLabel
+            // 
+            this.descriptionLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.descriptionLabel.AutoSize = true;
+            this.descriptionLabel.Font = new System.Drawing.Font("Bahnschrift", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.descriptionLabel.Location = new System.Drawing.Point(54, 141);
+            this.descriptionLabel.Margin = new System.Windows.Forms.Padding(85, 0, 45, 0);
+            this.descriptionLabel.Name = "descriptionLabel";
+            this.descriptionLabel.Size = new System.Drawing.Size(66, 17);
+            this.descriptionLabel.TabIndex = 23;
+            this.descriptionLabel.Text = "description";
+            this.descriptionLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.descriptionLabel.UseCompatibleTextRendering = true;
+            this.descriptionLabel.Visible = false;
+            // 
+            // iconBox
+            // 
+            this.iconBox.Image = ((System.Drawing.Image)(resources.GetObject("iconBox.Image")));
+            this.iconBox.Location = new System.Drawing.Point(34, 23);
+            this.iconBox.Name = "iconBox";
+            this.iconBox.Size = new System.Drawing.Size(80, 76);
+            this.iconBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.iconBox.TabIndex = 22;
+            this.iconBox.TabStop = false;
+            this.iconBox.Visible = false;
+            // 
+            // panel1
+            // 
+            this.panel1.Location = new System.Drawing.Point(118, 214);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(200, 23);
+            this.panel1.TabIndex = 24;
             // 
             // regionTextBox
             // 
@@ -390,17 +436,6 @@
             this.regionTextBox.TabIndex = 11;
             this.regionTextBox.TabStop = false;
             this.regionTextBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            // 
-            // gifBoxCold
-            // 
-            this.gifBoxCold.Image = ((System.Drawing.Image)(resources.GetObject("gifBoxCold.Image")));
-            this.gifBoxCold.Location = new System.Drawing.Point(3, 0);
-            this.gifBoxCold.Name = "gifBoxCold";
-            this.gifBoxCold.Size = new System.Drawing.Size(290, 214);
-            this.gifBoxCold.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.gifBoxCold.TabIndex = 18;
-            this.gifBoxCold.TabStop = false;
-            this.gifBoxCold.Visible = false;
             // 
             // regionLabel
             // 
@@ -620,7 +655,6 @@
             // timer1
             // 
             this.timer1.Interval = 4000;
-            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
             // removeSelectedButton
             // 
@@ -706,8 +740,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.errorIcon)).EndInit();
             this.tempBox.ResumeLayout(false);
             this.tempBox.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.gifBoxHot)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.gifBoxCold)).EndInit();
+            this.panel.ResumeLayout(false);
+            this.panel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.iconBox)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.refreshBox2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.blankBox)).EndInit();
             this.ResumeLayout(false);
@@ -757,17 +792,20 @@
         private Label noDataLabel;
         private Button confirmButton;
         private Button plotButton;
-        private PictureBox gifBoxHot;
         private System.Windows.Forms.Timer timer1;
-        private PictureBox gifBoxCold;
         private Button removeSelectedButton;
         private PictureBox errorIcon;
         private ToolTip toolTip2;
         private Button saveButton;
         private Label copyrightLabel;
         private Button removeAllButton;
-        private Button currentButton;
+        private Button getButton;
         private Button newButton;
         private Button sourceButton;
+        private PictureBox iconBox;
+        private Label descriptionLabel;
+        private Panel panel;
+        private Panel panel1;
+        private Label tempLabel2;
     }
 }

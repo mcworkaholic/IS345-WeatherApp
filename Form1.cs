@@ -54,7 +54,9 @@
  * 
  * **/
 
+using Newtonsoft.Json;
 using System.Data;
+using System.Data.Entity.Core.Common.CommandTrees.ExpressionBuilder;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.Globalization;
@@ -146,7 +148,7 @@ namespace Project_2
         {
             InitializeComponent();
             // Array of all controls whose visibility is toggled in the form on data load and form reset
-            controls = new Control[] { addButton, searchTextBox, clearButton, refreshBox2, highButton, lowButton, currentButton,
+            controls = new Control[] { addButton, searchTextBox, clearButton, refreshBox2, highButton, lowButton, getButton,
              bulkInsertButton, resetButton, editButton, plotButton, removeButton, removeAllButton};
         }
         // GLOBALS, to be altered by the application
@@ -169,8 +171,6 @@ namespace Project_2
             "SELECT AVG(temp) FROM weather WHERE state = 'ND';",
             "SELECT AVG(temp) FROM weather WHERE state = 'MN';",
             "SELECT AVG(temp) FROM weather WHERE state in ('WI', 'IA', 'SD', 'ND', 'MN');" };
-
-
 
         private void cityTextBox_TextChanged(object sender, EventArgs e)
         {
@@ -235,15 +235,207 @@ namespace Project_2
                 }
             }
         }
-        private void addButton_Click(object sender, EventArgs e)
+        private void getButton_Click(object sender, EventArgs e)
         {
-            // Changes whatever the user enters into title case (princeton -> Princeton) or (san francisco -> San Francisco)
             cityTextBox.Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(cityTextBox.Text);
-            string abbreviation = "St.";
-            if (cityTextBox.Text.Contains(abbreviation))
+
+            string[] abbreviation = { "St.", "st." };
+            if (abbreviation.Any(cityTextBox.Text.Contains))
             {
                 string text = cityTextBox.Text;
-                text = text.Replace(abbreviation, "Saint");
+                text = text.Replace(abbreviation[0], "Saint");
+                cityTextBox.Text = text;
+            }
+            
+            if (VerifyLocation(cityTextBox.Text, stateBox.GetItemText(stateBox.SelectedItem).ToString()) == true)
+            {
+                string workingDirectory = Environment.CurrentDirectory;
+                string dataDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "/Data";
+                string iconDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "/img/icons-weather";
+
+                using (SQLiteConnection con = new SQLiteConnection(@"data source =" + Path.Combine(dataDirectory, "cities.db")))
+                {
+                    try
+                    {
+                        con.Open();
+                        Query = "SELECT US_CITIES.LATITUDE, US_CITIES.LONGITUDE from US_CITIES INNER JOIN US_STATES ON US_CITIES.ID_STATE = US_STATES.ID WHERE US_CITIES.CITY = @CITY AND US_STATES.STATE_CODE = @STATE;";
+                        SQLiteCommand cmd = new SQLiteCommand(Query, con);
+                        cmd.Parameters.AddWithValue("@CITY", cityTextBox.Text);
+                        cmd.Parameters.AddWithValue("@STATE", stateBox.GetItemText(stateBox.SelectedItem).ToString());
+                        using (SQLiteDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                string latitude = (String.Format("{0}", reader["LATITUDE"]));
+                                string longitude = (String.Format("{0}", reader["LONGITUDE"]));
+                                // MessageBox.Show("Latitude: " + latitude + " Longitude: " + longitude);
+                                // Calls openweathermap.org's API to get weather conditions
+                                // example api call: https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API key}
+
+                                using (var client = new HttpClient())
+                                {
+                                    bool valid;
+                                    var apiKey = "bdd9cf8717a09ffd505acc42dac63d73";
+                                    var response = client.GetAsync($@"https://api.openweathermap.org/data/2.5/weather?lat={latitude}&lon={longitude}&appid={apiKey}").Result;
+                                    response.EnsureSuccessStatusCode();
+                                    var content = response.Content.ReadAsStringAsync().Result;
+                                    if (content.Length == 0 || content == "[]")
+                                    {
+                                        valid = false;
+                                    }
+                                    else
+                                    {
+                                        dynamic details = JsonConvert.DeserializeObject(content);
+                                        string description = details["weather"][0]["description"].ToString();
+                                        string kelvin = details["main"]["temp"].ToString();
+                                        // Fahrenheit = 1.8*(K-273) + 32
+                                        // Celsius = K – 273.15
+                                        double v = double.Parse(kelvin) - 273;
+                                        double celsius = Math.Round(v - .15);
+                                        double fahrenheit = Math.Round(((1.8 * v) + 32), 2);
+                                        string cstring = celsius.ToString();
+                                        string fstring = fahrenheit.ToString();
+                                        string icon = details["weather"][0]["icon"].ToString();
+                                        string id = details["weather"][0]["id"].ToString();
+                                        string[] drizzle = { "300", "301", "302", "310", "311", "312", "313", "314", "321" };
+                                        string[] thunderstormsRain = { "200", "201", "202", "230", "231", "232" };
+                                        string[] snow = { "600", "601", "602", "620", "621", "622" };
+                                        string[] sleet = { "611", "612", "613", "615", "616" };
+                                        string[] rain = { "511", "520", "521", "522", "531" };
+                                        string[] thunderstorms = {"210", "211", "212", "221"};
+                                        string[] partCldDyRain = { "501", "502", "503", "504" };
+                                        string[] overcastNight = { "03n", "04n" };
+
+                                        if (drizzle.Any(id.Contains))
+                                        {
+                                            iconBox.ImageLocation = iconDirectory + "/drizzle.gif";
+                                        }
+                                        else if (thunderstormsRain.Any(id.Contains))
+                                        {
+                                            iconBox.ImageLocation = iconDirectory + "/thunderstorms-rain.gif";
+                                        }
+                                        else if (snow.Any(id.Contains))
+                                        {
+                                            iconBox.ImageLocation = iconDirectory + "/snow.gif";
+                                        }
+                                        else if (sleet.Any(id.Contains))
+                                        {
+                                            iconBox.ImageLocation = iconDirectory + "/sleet.gif";
+                                        }
+                                        else if (rain.Any(id.Contains))
+                                        {
+                                            iconBox.ImageLocation = iconDirectory + "/rain.gif";
+                                        }
+                                        else if (thunderstorms.Any(id.Contains))
+                                        {
+                                            iconBox.ImageLocation = iconDirectory + "/thunderstorms.gif";
+                                        }
+                                        else if (partCldDyRain.Any(id.Contains))
+                                        {
+                                            iconBox.ImageLocation = iconDirectory + "/partly-cloudy-day-rain.gif";
+                                        }
+                                        else if (icon == "01d")
+                                        {
+                                            iconBox.ImageLocation = iconDirectory + "/clear-day.gif";
+                                        }
+                                        else if (icon == "01n")
+                                        {
+                                            iconBox.ImageLocation = iconDirectory + "/clear-night.gif";
+                                        }
+                                        else if (icon == "02d")
+                                        {
+                                            iconBox.ImageLocation = iconDirectory + "/partly-cloudy-day.gif";
+                                        }
+                                        else if (icon == "02n")
+                                        {
+                                            iconBox.ImageLocation = iconDirectory + "/partly-cloudy-night.gif";
+                                        }
+                                        else if (icon == "03d")
+                                        {
+                                            iconBox.ImageLocation = iconDirectory + "/overcast-day.gif";
+                                        }
+                                        else if (overcastNight.Any(id.Contains))
+                                        {
+                                            iconBox.ImageLocation = iconDirectory + "/overcast-night.gif";
+                                        }
+                                        else
+                                        {
+                                            switch (id)
+                                            {
+
+                                                case "500":
+                                                    iconBox.ImageLocation = iconDirectory + "/partly-cloudy-day-drizzle.gif";
+                                                    break;
+
+                                                case "701":
+                                                    iconBox.ImageLocation = iconDirectory + "/mist.gif";
+                                                    break;
+                                                case "711":
+                                                    iconBox.ImageLocation = iconDirectory + "/smoke.gif";
+                                                    break;
+
+                                                case "721":
+                                                    iconBox.ImageLocation = iconDirectory + "/haze-day.gif";
+                                                    break;
+                                                case "731":
+                                                    iconBox.ImageLocation = iconDirectory + "/dust-day.gif";
+                                                    break;
+
+                                                case "761":
+                                                    iconBox.ImageLocation = iconDirectory + "/dust-day.gif";
+                                                    break;
+                                                case "771":
+                                                    iconBox.ImageLocation = iconDirectory + "/wind.gif";
+                                                    break;
+
+                                                case "781":
+                                                    iconBox.ImageLocation = iconDirectory + "/tornado.gif";
+                                                    break;
+
+                                                default:
+                                                    iconBox.ImageLocation = iconDirectory + "/partly-cloudy-day.gif";
+                                                    break;
+                                            }
+                                        }
+                                        iconBox.Visible = true;
+                                        descriptionLabel.Visible = true;
+                                        tempLabel2.Visible = true;
+                                        tempTextBox.Text = fstring;
+                                        descriptionLabel.Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(description); 
+                                        tempLabel2.Text = fstring + "°F";
+                                        tempLabel2.Location = new Point(((panel.Width - tempLabel2.Width)/ 2), 117);
+                                        descriptionLabel.Location= new Point(((panel.Width-descriptionLabel.Width) / 2) + 4, 141);
+                                        iconBox.BringToFront();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // Exception handling
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error: " + ex.Message);
+                    }
+                }
+            }
+            else
+            {
+                errorIcon.Visible = true;
+                cityTextBox.Focus();
+            }
+        }
+        private void addButton_Click(object sender, EventArgs e)
+        {
+            string workingDirectory = Environment.CurrentDirectory;
+            string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName;
+
+            // Changes whatever the user enters into title case (princeton -> Princeton) or (san francisco -> San Francisco)
+            cityTextBox.Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(cityTextBox.Text);
+            string[] abbreviation = { "St.", "st." };
+            if (abbreviation.Any(cityTextBox.Text.Contains))
+            {
+                string text = cityTextBox.Text;
+                text = text.Replace(abbreviation[0], "Saint");
                 cityTextBox.Text = text;
             }
             else
@@ -300,21 +492,6 @@ namespace Project_2
                     con.Open();
                     cmd = new SQLiteCommand(Query, con);
                     cmd.ExecuteNonQuery();
-
-                    // shows the hot gif
-                    if (double.Parse(tempTextBox.Text) > 100 && double.Parse(tempTextBox.Text) < 140)
-                    {
-                        gifBoxHot.Visible = true;
-                        gifBoxHot.BringToFront();
-                        timer1.Start();
-                    }
-                    // shows the cold gif
-                    else if ((double.Parse(tempTextBox.Text) > -70 && double.Parse(tempTextBox.Text) < 15))
-                    {
-                        gifBoxCold.Visible = true;
-                        gifBoxCold.BringToFront();
-                        timer1.Start();
-                    }
                     con.Close();
 
                     LoadData(CheckCurrentFile());
@@ -324,6 +501,7 @@ namespace Project_2
                     // Selects last added record and highlights the ID of the cell
                     dataGridView1.CurrentCell = dataGridView1[0, datatable.Rows.Count - 1];
                     dataGridView1.Rows[datatable.Rows.Count - 1].Selected = true;
+                    iconBox.Visible = false;
                     ReloadAVGTextBoxes();
                 }
             }
@@ -341,13 +519,15 @@ namespace Project_2
             stateBox.Text = string.Empty;
             stateBox.SelectedIndex = -1;
             tempTextBox.Text = string.Empty;
+            iconBox.Visible = false;
+            tempLabel2.Visible = false;
+            descriptionLabel.Visible = false;
         }
 
         private void clearButton_Click(object sender, EventArgs e)
         {
             EmptyTextBoxes();
         }
-
         // reloads selected textboxes and their averages
         private void ReloadAVGTextBoxes()
         {
@@ -436,6 +616,9 @@ namespace Project_2
             dataGridView1.Columns[3].DefaultCellStyle.Format = "MM/dd/yyyy";
             dataGridView1.Columns[3].ValueType = typeof(DateTime);
             dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
+            descriptionLabel.Visible = false;
+            tempLabel2.Visible = false;
+            iconBox.Visible = false;
         }
         /* The function AVGTextboxes takes in two parameters, an array of TextBox objects and an array of strings (queries). 
          * The purpose of this function is to update the text of the TextBox objects 
@@ -912,12 +1095,6 @@ namespace Project_2
             GC.Collect();
         }
         // Timer to stop the showing of each gif, set for 4 seconds each for each one in the designer
-        private void timer1_Tick(object sender, EventArgs e)
-        {
-            timer1.Stop();
-            gifBoxCold.Visible = false;
-            gifBoxHot.Visible = false;
-        }
         private void dataGridView_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
 
         {
@@ -1013,65 +1190,65 @@ namespace Project_2
 
             //foreach (DataRowCollection row in modifiedRows)
             //{
-                // Get the last row edited
-                int lastRowEdited = dataGridView1.CurrentCell.RowIndex;
-                double temp;
+            // Get the last row edited
+            int lastRowEdited = dataGridView1.CurrentCell.RowIndex;
+            double temp;
 
-                // Check the last row edited for errors
+            // Check the last row edited for errors
 
-                // Change city to titlecase for SQL query and formatting
-                string city = dataGridView1.Rows[lastRowEdited].Cells["City"].Value.ToString();
-                city = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(city);
-                dataGridView1.Rows[lastRowEdited].Cells[1].Value = city;
+            // Change city to titlecase for SQL query and formatting
+            string city = dataGridView1.Rows[lastRowEdited].Cells["City"].Value.ToString();
+            city = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(city);
+            dataGridView1.Rows[lastRowEdited].Cells[1].Value = city;
 
-                string state = dataGridView1.Rows[lastRowEdited].Cells["State"].Value.ToString().ToUpper();
-                dataGridView1.Rows[lastRowEdited].Cells[2].Value = state;
+            string state = dataGridView1.Rows[lastRowEdited].Cells["State"].Value.ToString().ToUpper();
+            dataGridView1.Rows[lastRowEdited].Cells[2].Value = state;
 
-                string tempString = dataGridView1.Rows[lastRowEdited].Cells["Temperature"].Value.ToString();
-                string date = dataGridView1.Rows[lastRowEdited].Cells["Date"].Value.ToString();
+            string tempString = dataGridView1.Rows[lastRowEdited].Cells["Temperature"].Value.ToString();
+            string date = dataGridView1.Rows[lastRowEdited].Cells["Date"].Value.ToString();
 
-                // Regex for mm/dd//yyyy
-                string pattern = @"^((((0[13578])|([13578])|(1[02]))[\/](([1-9])|([0-2][0-9])|(3[01])))|(((0[469])|([469])|(11))[\/](([1-9])|([0-2][0-9])|(30)))|((2|02)[\/](([1-9])|([0-2][0-9]))))[\/]\d{4}$|^\d{4}$";
+            // Regex for mm/dd//yyyy
+            string pattern = @"^((((0[13578])|([13578])|(1[02]))[\/](([1-9])|([0-2][0-9])|(3[01])))|(((0[469])|([469])|(11))[\/](([1-9])|([0-2][0-9])|(30)))|((2|02)[\/](([1-9])|([0-2][0-9]))))[\/]\d{4}$|^\d{4}$";
 
-                string abbreviation = "St.";
-                if (city != null && city.Contains(abbreviation))
-                {
-                    city = city.Replace(abbreviation, "Saint");
-                }
-                if (city != null && state != null && VerifyLocation(city, state) == false)
-                {
-                    dataGridView1.Rows[lastRowEdited].ErrorText = "Location could not be verified";
-                    MessageBox.Show("Location could not be verified. Please correct the errors in the DataGridView before saving.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
+            string abbreviation = "St.";
+            if (city != null && city.Contains(abbreviation))
+            {
+                city = city.Replace(abbreviation, "Saint");
+            }
+            if (city != null && state != null && VerifyLocation(city, state) == false)
+            {
+                dataGridView1.Rows[lastRowEdited].ErrorText = "Location could not be verified";
+                MessageBox.Show("Location could not be verified. Please correct the errors in the DataGridView before saving.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
-                else if (date == null || !System.Text.RegularExpressions.Regex.IsMatch(date, pattern))
-                {
-                    dataGridView1.Rows[lastRowEdited].ErrorText = "Date must be in mm/dd/yyyy format";
-                    MessageBox.Show("Date must be in mm/dd/yyyy format. Please correct the errors in the DataGridView before saving.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-                else if (!double.TryParse(tempString, out temp) || (temp < -70 || temp > 140))
-                {
-                    dataGridView1.Rows[lastRowEdited].ErrorText = "Temperature must be between -70 & 140";
-                    MessageBox.Show(" Temperature must be between -70 & 140°F. Please correct the errors in the DataGridView before saving.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-                else
-                {
-                    dataGridView1.Rows[lastRowEdited].ErrorText = "";
-                    saveButton.Visible = false;
-                    // Disable editing mode on the DataGridView
-                    dataGridView1.ReadOnly = true;
-                    // Create a new command builder
-                    SQLiteCommandBuilder cmdBuilder = new SQLiteCommandBuilder(adapter);
-                    // Update the database with the changes made to the DataTable
-                    adapter.Update(datatable);
-                    ReloadAVGTextBoxes();
-                    // Set the EditMode back to 'EditProgrammatically'
-                    dataGridView1.EditMode = DataGridViewEditMode.EditProgrammatically;
-                    dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
-                }
+            else if (date == null || !System.Text.RegularExpressions.Regex.IsMatch(date, pattern))
+            {
+                dataGridView1.Rows[lastRowEdited].ErrorText = "Date must be in mm/dd/yyyy format";
+                MessageBox.Show("Date must be in mm/dd/yyyy format. Please correct the errors in the DataGridView before saving.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            else if (!double.TryParse(tempString, out temp) || (temp < -70 || temp > 140))
+            {
+                dataGridView1.Rows[lastRowEdited].ErrorText = "Temperature must be between -70 & 140";
+                MessageBox.Show(" Temperature must be between -70 & 140°F. Please correct the errors in the DataGridView before saving.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            else
+            {
+                dataGridView1.Rows[lastRowEdited].ErrorText = "";
+                saveButton.Visible = false;
+                // Disable editing mode on the DataGridView
+                dataGridView1.ReadOnly = true;
+                // Create a new command builder
+                SQLiteCommandBuilder cmdBuilder = new SQLiteCommandBuilder(adapter);
+                // Update the database with the changes made to the DataTable
+                adapter.Update(datatable);
+                ReloadAVGTextBoxes();
+                // Set the EditMode back to 'EditProgrammatically'
+                dataGridView1.EditMode = DataGridViewEditMode.EditProgrammatically;
+                dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
+            }
             //}
         }
 
@@ -1093,11 +1270,6 @@ namespace Project_2
             adapter.Update(datatable);
             ReloadAVGTextBoxes();
             LoadData(CheckCurrentFile());
-
-        }
-        private void currentButton_Click(object sender, EventArgs e)
-        {
-
         }
     }
 }

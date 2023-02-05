@@ -31,7 +31,7 @@ def plot(filename, begin_year, end_year):
     #print(path)
     
     try:
-        os.remove(path + "\\img\\plot.png")
+        os.remove(path + "\\img\\plotting\\plot.png")
     except OSError:
         pass
     

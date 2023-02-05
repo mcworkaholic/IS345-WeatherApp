@@ -1,50 +1,64 @@
 ﻿/**
  * Author:    Weston Evans
  * Created:   Week 1
- * Last Changed: 1.29.2023
+ * Last Changed: 2.5.2023
  * Class: IS345 Sec. 54
  * Purpose: Temperature Analysis Application  
  * 
- * USAGE:
+ * ------------------------------------------USAGE--------------------------------------------------------------------------
  * 
  * START: 
  * 
  * The user can either start by pressing "select source" to pick one of the provided databases 
- * or "new" to create an empty one to start adding in data. It is recommended to click "select source" and start with "weathersmall.db" for testing.
+ * or "new" to create an empty one to start adding in data. It is recommended to click 
+ * "select source" and start with "weathersmall.db" for testing.
  * The user must then confirm whether or not they wish to open the selected database.
  * 
  * INSERTION: 
  * 
- * To add in a single record they just have to enter a city(valid), state, temperature(within range), 
- * and then pick a date. At this point the user can either click clear to reset all textBox values or the "➕" button to add the record.
- * For BULK insertion, click on the "Bulk ➕" button and pick from the given .csv files that are already formatted for insertion. 
+ * To add in a single record enter a city(valid), state, temperature(within range), 
+ * and then pick a date. At this point the user can either click clear to reset all textBox values 
+ * or the "➕" button to add the record.
+ * 
+ * For BULK insertion, click on the "Bulk ➕" button and pick from the given .csv files 
+ * that are already formatted for insertion. 
+ * 
  * It is recommended to start from new when doing a bulk insert so you can see exactly what values were inserted. 
+ * "weather.csv" is the default CSV file.
  * 
- * -----------------------------OPTIONS-----------------------------
+ * --------------------------------------MORE OPTIONS----------------------------------------------------------------------
  * 
- * HIGH/LOW: To find the highest/lowest record simply click on the highest/lowest button in the lower left hand corner.
- * To refresh the view to all records click on the refresh symbol to the right of the previosly mentioned buttons. There is another refresh button near the middle. 
+ * GET: 
+ * 
+ * To GET current records of any city or unincorporated community click on "GET" button after entering a valid city and state. 
+ * An icon will appear to the right with current weather condition and temperature. 
+ * Additionally, the temp textbox will be filled for the user to add the current values or clear them and search for another.
+ * 
+ * HIGH/LOW: 
+ * 
+ * To find the highest/lowest record simply click on the highest/lowest button in the lower left hand corner.
+ * To refresh the view to all records click on the refresh symbol to the right of the previously mentioned buttons. 
  * 
  * RESET: 
  * 
- * To reset the form and/or load a different database you can click on reset.
+ * To reset the form and/or load a different database you can click on reset and select source again.
  * 
- * EDITING: 
+ * EDITING/REMOVING: 
  * 
  * To edit or remove a record the user needs to either click on EDIT or REMOVE. 
  * Once the edit button is clicked, changes can be made after double clicking in the datagridview 
  * but they must also click on the SAVE button to commit their changes. Note that some columns are read only.
  * 
  * To REMOVE a record that button must also be clicked and the datagridview selection mode changes to full row select.
- * Clicking on CANCEL exits removal mode and changes selection mode to cell select. 
- * To remove multiple records the ctrl button must be held while clicking, 
+ * Clicking on CANCEL exits removal mode and changes selection mode from FullRowSelect to CellSelect. 
+ * 
+ * To REMOVE multiple records the ctrl button must be held while clicking, 
  * and when the user is satisfied they must click on the CONFIRM button to commit their changes.
- * Clicking on REMOVE ALL removes all records in the current database but does not delete the database. 
+ * 
+ * REMOVE ALL: removes all records in the current database but does not delete the database. 
  * DO NOT click on the red ❌ as you search, the functionality is broken for now.
  * 
- * SEARCH:
- * 
- * To filter just start typing in the search text box. It filters by city, state, or region.
+ * SEARCH: To filter the DGV just start typing in the search text box. It filters by city, state, or region.
  * 
  * PLOT:
  * 
@@ -151,8 +165,8 @@ namespace Project_2
             controls = new Control[] { addButton, searchTextBox, clearButton, refreshBox2, highButton, lowButton, getButton,
              bulkInsertButton, resetButton, editButton, plotButton, removeButton, removeAllButton};
         }
-        // GLOBALS, to be altered by the application
 
+        // GLOBALS, to be altered by the application
         SQLiteConnection con;
         DialogResult dialogFileConfirm;
         SQLiteCommand cmd;
@@ -164,7 +178,7 @@ namespace Project_2
         private string selectedFile;
         DataView DV;
 
-        // Queries for the avg textboxes
+        // Queries for the avg textboxes, adaptability is a concern
         string[] queries = { "SELECT AVG(temp) FROM weather WHERE state = 'WI';",
             "SELECT AVG(temp) FROM weather WHERE state = 'IA';",
             "SELECT AVG(temp) FROM weather WHERE state = 'SD';",
@@ -235,6 +249,7 @@ namespace Project_2
                 }
             }
         }
+        // Needs to be optimized
         private void getButton_Click(object sender, EventArgs e)
         {
             cityTextBox.Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(cityTextBox.Text);
@@ -268,14 +283,14 @@ namespace Project_2
                             {
                                 string latitude = (String.Format("{0}", reader["LATITUDE"]));
                                 string longitude = (String.Format("{0}", reader["LONGITUDE"]));
-                                // MessageBox.Show("Latitude: " + latitude + " Longitude: " + longitude);
+                                
                                 // Calls openweathermap.org's API to get weather conditions
                                 // example api call: https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API key}
 
                                 using (var client = new HttpClient())
                                 {
                                     bool valid;
-                                    var apiKey = "bdd9cf8717a09ffd505acc42dac63d73";
+                                    var apiKey = "bdd9cf8717a09ffd505acc42dac63d73"; //do not abuse, may need to get a new API key in the future
                                     var response = client.GetAsync($@"https://api.openweathermap.org/data/2.5/weather?lat={latitude}&lon={longitude}&appid={apiKey}").Result;
                                     response.EnsureSuccessStatusCode();
                                     var content = response.Content.ReadAsStringAsync().Result;
@@ -465,14 +480,9 @@ namespace Project_2
                 else
                 {
                     stateBox.DroppedDown = false;
-                    // string selected = this.ComboBox.GetItemText(this.ComboBox.SelectedItem);
-                    // messageBox.Show(selected)
                     dataGridView1.DataSource = null;
                     dataGridView1.Update();
                     dataGridView1.Refresh();
-
-                    // check if a new database was created/new button was pressed and confirmed
-                    con = new SQLiteConnection(@"data source =" + CheckCurrentFile());
 
                     // sets date format
                     string theDate = dateTimePicker1.Value.ToString("M/dd/yyyy");
@@ -486,7 +496,7 @@ namespace Project_2
                     }
 
                     //MessageBox.Show("theDate: " + theDate + " " + "year : " + year + " " + " month: " + month + " day: " + day);  -> debugging
-
+                    con = new SQLiteConnection(@"data source =" + CheckCurrentFile());
                     // Create a new SQLiteCommand object with the INSERT INTO statement
                     Query = string.Format("INSERT INTO weather (city, state, region, date, year, month, day, temp) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}')", cityTextBox.Text, stateBox.Text, ReturnRegion(stateBox.GetItemText(stateBox.SelectedItem)), theDate, year, month, day, tempTextBox.Text);
                     con.Open();
@@ -1094,7 +1104,6 @@ namespace Project_2
             }
             GC.Collect();
         }
-        // Timer to stop the showing of each gif, set for 4 seconds each for each one in the designer
         private void dataGridView_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
 
         {

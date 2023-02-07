@@ -453,10 +453,6 @@ namespace Project_2
                 text = text.Replace(abbreviation[0], "Saint");
                 cityTextBox.Text = text;
             }
-            else
-            {
-                // Do nothing
-            }
             try
             {
                 // Check if the temperature entered is within the allowed range
@@ -711,10 +707,6 @@ namespace Project_2
                         LoadData(selectedFile);
                         ReloadAVGTextBoxes();
                     }
-                    else if (dialogFileConfirm != DialogResult.Cancel)
-                    {
-                        // Do Nothing
-                    }
                 }
             }
         }
@@ -860,10 +852,6 @@ namespace Project_2
                 // Reload the data grid with the new .db file
                 LoadData(newDbFile);
                 ReloadAVGTextBoxes();
-            }
-            else if (result == DialogResult.No)
-            {
-                // Do not perform delete action
             }
         }
         private void csvImport()
@@ -1032,18 +1020,16 @@ namespace Project_2
                 if (form2.ShowDialog() == DialogResult.OK)
                 {
                     selectedYearRange = (form2.YearRange().Item1, form2.YearRange().Item2);
-                    // May need to change python path to something like "C:\Python311\python.exe" or just "python" depending on your installation
-                    string pythonPath = "python3";
 
                     // plotting script location
-                    string scriptPath = Path.Combine(projectDirectory, "Scripts", "tempPlotter.py");
+                    string scriptPath = Path.Combine(projectDirectory, "Scripts", "tempPlotter.exe");
 
                     var process = new Process
                     {
                         StartInfo = new ProcessStartInfo
                         {
-                            FileName = pythonPath,
-                            Arguments = $"{scriptPath} {CheckCurrentFile()} {selectedYearRange.Item1} {selectedYearRange.Item2}",
+                            FileName = scriptPath,
+                            Arguments = $"{CheckCurrentFile()} {selectedYearRange.Item1} {selectedYearRange.Item2}",
                             RedirectStandardOutput = true,
                             UseShellExecute = false,
                             CreateNoWindow = true,
@@ -1066,7 +1052,7 @@ namespace Project_2
                             // Create a new form to display the figure
                             Form figureForm = new Form();
                             PictureBox figureBox = new PictureBox();
-                            string figurePath = Path.Combine(projectDirectory, "img", "plot.png");
+                            string figurePath = Path.Combine(projectDirectory, "img\\plotting", "plot.png");
                             figureBox.Image = System.Drawing.Image.FromFile(figurePath);
                             figureBox.Size = figureBox.Image.Size;
                             figureForm.Controls.Add(figureBox);
@@ -1087,10 +1073,6 @@ namespace Project_2
                         // check the output and error variables for any messages
                         MessageBox.Show(error);
                     }
-                }
-                else
-                {
-                    //Do nothing
                 }
             }
         }
@@ -1157,107 +1139,117 @@ namespace Project_2
                     break;
             }
         }
-        // *Work Needed* to integrate with the selected/highlighted rows after filtering in the search textbox
         private void removeSelectedButton_Click(object sender, EventArgs e)
         {
-            con = new SQLiteConnection(@"data source =" + CheckCurrentFile());
-            // Iterate through the selected rows and remove them from the DataTable
-            foreach (DataGridViewRow row in dataGridView1.Rows)
+            DialogResult result = MessageBox.Show("Delete highlighted rows? This action cannot be undone.", "Confirm Delete", MessageBoxButtons.YesNo);
+            if (result == DialogResult.Yes)
             {
-                // Get the DataRow object for the row
-                DataRow dataRow = ((DataRowView)row.DataBoundItem).Row;
-
-                // Define the DELETE statement
-                string deleteSql = "DELETE FROM weather WHERE city LIKE @City AND state LIKE @State AND region LIKE @Region";
-                con.Open();
-                // Create a new SqlCommand object with the DELETE statement and the connection
-                using (SQLiteCommand deleteCommand = new SQLiteCommand(deleteSql, con))
+                con = new SQLiteConnection(@"data source =" + CheckCurrentFile());
+                // Iterate through the selected rows and remove them from the DataTable
+                foreach (DataRowView rowView in DV)
                 {
-                    // Add the ID parameter and set its value to the ID of the current row
-                    deleteCommand.Parameters.AddWithValue("@City", dataRow["City"]);
-                    deleteCommand.Parameters.AddWithValue("@State", dataRow["State"]);
-                    deleteCommand.Parameters.AddWithValue("@Region", dataRow["Region"]);
+                    // Get the DataRow object for the row
+                    DataRow row = rowView.Row;
 
-                    // Execute the DELETE statement
-                    deleteCommand.ExecuteNonQuery();
+                    // Define the DELETE statement
+                    string deleteSql = "DELETE FROM weather WHERE city = @City AND state = @State AND region = @Region";
+                    con.Open();
+                    // Create a new SqlCommand object with the DELETE statement and the connection
+                    using (SQLiteCommand deleteCommand = new SQLiteCommand(deleteSql, con))
+                    {
+                        // Add the ID parameter and set its value to the ID of the current row
+                        deleteCommand.Parameters.AddWithValue("@City", row["City"]);
+                        deleteCommand.Parameters.AddWithValue("@State", row["State"]);
+                        deleteCommand.Parameters.AddWithValue("@Region", row["Region"]);
+
+                        // Execute the DELETE statement
+                        deleteCommand.ExecuteNonQuery();
+                    }
+                    con.Close();
+                    // mark the row as deleted
+                    // accept changes to remove the deleted rows
+                    datatable.AcceptChanges();
+                    adapter.Update(datatable);
+                    ReloadAVGTextBoxes();
+                    LoadData(CheckCurrentFile());
                 }
-                con.Close();
-                // mark the row as deleted
-                // accept changes to remove the deleted rows
-                datatable.AcceptChanges();
-                adapter.Update(datatable);
-                ReloadAVGTextBoxes();
-                LoadData(CheckCurrentFile());
-
             }
+            searchTextBox.Text = string.Empty;
+            searchTextBox.PlaceholderText = "Search...";
+            removeSelectedButton.Visible = false;
         }
         // Commits and formats changes after entry
         private void saveButton_Click_1(object sender, EventArgs e)
         {
             ////Get all row changes from embedded DataTable of DataGridView's DataSource
-            //DataRowCollection modifiedRows = ((DataTable)dataGridView1.DataSource).GetChanges(DataRowState.Modified).Rows;
+            DataRowCollection modifiedRows = ((DataTable)dataGridView1.DataSource).GetChanges(DataRowState.Modified).Rows;
 
-            //foreach (DataRowCollection row in modifiedRows)
+            //foreach (DataRow row in modifiedRows)
             //{
-            // Get the last row edited
-            int lastRowEdited = dataGridView1.CurrentCell.RowIndex;
-            double temp;
 
-            // Check the last row edited for errors
+                // Disable readonly temporarily so that the region can be set if the user edits the "State" column
+                datatable.Columns[3].ReadOnly = false; // region
+            
+                // Get the last row edited
+                int lastRowEdited = dataGridView1.CurrentCell.RowIndex;
+                double temp;
 
-            // Change city to titlecase for SQL query and formatting
-            string city = dataGridView1.Rows[lastRowEdited].Cells["City"].Value.ToString();
-            city = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(city);
-            dataGridView1.Rows[lastRowEdited].Cells[1].Value = city;
+                // Check the last row edited for errors
 
-            string state = dataGridView1.Rows[lastRowEdited].Cells["State"].Value.ToString().ToUpper();
-            dataGridView1.Rows[lastRowEdited].Cells[2].Value = state;
+                // Change city to titlecase for SQL query and formatting
+                string city = dataGridView1.Rows[lastRowEdited].Cells["City"].Value.ToString();
+                city = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(city);
+                dataGridView1.Rows[lastRowEdited].Cells[1].Value = city;
 
-            string tempString = dataGridView1.Rows[lastRowEdited].Cells["Temperature"].Value.ToString();
-            string date = dataGridView1.Rows[lastRowEdited].Cells["Date"].Value.ToString();
+                string state = dataGridView1.Rows[lastRowEdited].Cells["State"].Value.ToString().ToUpper();
+                dataGridView1.Rows[lastRowEdited].Cells[2].Value = state;
+                dataGridView1.Rows[lastRowEdited].Cells[3].Value = ReturnRegion(state); // setting region upon edit of state value
 
-            // Regex for mm/dd//yyyy
-            string pattern = @"^((((0[13578])|([13578])|(1[02]))[\/](([1-9])|([0-2][0-9])|(3[01])))|(((0[469])|([469])|(11))[\/](([1-9])|([0-2][0-9])|(30)))|((2|02)[\/](([1-9])|([0-2][0-9]))))[\/]\d{4}$|^\d{4}$";
+                string tempString = dataGridView1.Rows[lastRowEdited].Cells["Temperature"].Value.ToString();
+                string date = dataGridView1.Rows[lastRowEdited].Cells["Date"].Value.ToString();
 
-            string abbreviation = "St.";
-            if (city != null && city.Contains(abbreviation))
-            {
-                city = city.Replace(abbreviation, "Saint");
-            }
-            if (city != null && state != null && VerifyLocation(city, state) == false)
-            {
-                dataGridView1.Rows[lastRowEdited].ErrorText = "Location could not be verified";
-                MessageBox.Show("Location could not be verified. Please correct the errors in the DataGridView before saving.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
+                // Regex for mm/dd//yyyy
+                string pattern = @"^((((0[13578])|([13578])|(1[02]))[\/](([1-9])|([0-2][0-9])|(3[01])))|(((0[469])|([469])|(11))[\/](([1-9])|([0-2][0-9])|(30)))|((2|02)[\/](([1-9])|([0-2][0-9]))))[\/]\d{4}$|^\d{4}$";
 
-            else if (date == null || !System.Text.RegularExpressions.Regex.IsMatch(date, pattern))
-            {
-                dataGridView1.Rows[lastRowEdited].ErrorText = "Date must be in mm/dd/yyyy format";
-                MessageBox.Show("Date must be in mm/dd/yyyy format. Please correct the errors in the DataGridView before saving.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-            else if (!double.TryParse(tempString, out temp) || (temp < -70 || temp > 140))
-            {
-                dataGridView1.Rows[lastRowEdited].ErrorText = "Temperature must be between -70 & 140";
-                MessageBox.Show(" Temperature must be between -70 & 140°F. Please correct the errors in the DataGridView before saving.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-            else
-            {
-                dataGridView1.Rows[lastRowEdited].ErrorText = "";
-                saveButton.Visible = false;
-                // Disable editing mode on the DataGridView
-                dataGridView1.ReadOnly = true;
-                // Create a new command builder
-                SQLiteCommandBuilder cmdBuilder = new SQLiteCommandBuilder(adapter);
-                // Update the database with the changes made to the DataTable
-                adapter.Update(datatable);
-                ReloadAVGTextBoxes();
-                // Set the EditMode back to 'EditProgrammatically'
-                dataGridView1.EditMode = DataGridViewEditMode.EditProgrammatically;
-                dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
-            }
+                string abbreviation = "St.";
+                if (city != null && city.Contains(abbreviation))
+                {
+                    city = city.Replace(abbreviation, "Saint");
+                }
+                if (city != null && state != null && VerifyLocation(city, state) == false)
+                {
+                    dataGridView1.Rows[lastRowEdited].ErrorText = "Location could not be verified";
+                    MessageBox.Show("Location could not be verified. Please correct the errors in the DataGridView before saving.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                else if (date == null || !System.Text.RegularExpressions.Regex.IsMatch(date, pattern))
+                {
+                    dataGridView1.Rows[lastRowEdited].ErrorText = "Date must be in mm/dd/yyyy format";
+                    MessageBox.Show("Date must be in mm/dd/yyyy format. Please correct the errors in the DataGridView before saving.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                else if (!double.TryParse(tempString, out temp) || (temp < -70 || temp > 140))
+                {
+                    dataGridView1.Rows[lastRowEdited].ErrorText = "Temperature must be between -70 & 140";
+                    MessageBox.Show(" Temperature must be between -70 & 140°F. Please correct the errors in the DataGridView before saving.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                else
+                {
+                    dataGridView1.Rows[lastRowEdited].ErrorText = "";
+                    saveButton.Visible = false;
+                    // Disable editing mode on the DataGridView
+                    dataGridView1.ReadOnly = true;
+                    // Create a new command builder
+                    SQLiteCommandBuilder cmdBuilder = new SQLiteCommandBuilder(adapter);
+                    // Update the database with the changes made to the DataTable
+                    adapter.Update(datatable);
+                    ReloadAVGTextBoxes();
+                    // Set the EditMode back to 'EditProgrammatically'
+                    dataGridView1.EditMode = DataGridViewEditMode.EditProgrammatically;
+                    dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
+                }
             //}
         }
 
@@ -1279,6 +1271,19 @@ namespace Project_2
             adapter.Update(datatable);
             ReloadAVGTextBoxes();
             LoadData(CheckCurrentFile());
+        }
+        // Resets control and textbox state after mouse-click outside of them
+        private void LightReset()
+        {
+            this.ActiveControl = null;
+            searchTextBox.Text = string.Empty;
+            searchTextBox.PlaceholderText = "Search...";
+            removeSelectedButton.Visible = false;
+            errorIcon.Visible = false;
+        }
+        private void WeatherForm_MouseClick(object sender, MouseEventArgs e)
+        {
+            LightReset();
         }
     }
 }

@@ -734,6 +734,7 @@
             this.MaximizeBox = false;
             this.Name = "WeatherForm";
             this.Text = "Temperature Analysis V2.0 ";
+            this.MouseClick += new System.Windows.Forms.MouseEventHandler(this.WeatherForm_MouseClick);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.weatherBox.ResumeLayout(false);
             this.weatherBox.PerformLayout();

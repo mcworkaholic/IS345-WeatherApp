@@ -1,8 +1,10 @@
+#!/usr/bin/python3
 import sys
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import sqlite3
+from pathlib import Path
 
 
 """
@@ -15,7 +17,14 @@ The script then uses the Matplotlib library to create a multiple time series plo
 """
 
 def plot(filename, begin_year, end_year):
-   
+    if getattr(sys, 'frozen', False):
+        # If the application is run as a bundle, the PyInstaller bootloader
+        # extends the sys module by a flag frozen=True and sets the app 
+        # path 
+        application_path = os.path.dirname(sys.executable)
+    else:
+        application_path = os.path.dirname(os.path.abspath(__file__))
+
     con = sqlite3.connect(filename)
     sql = """SELECT region, date, year, month, temp, AVG(temp) FROM weather WHERE year >= ? AND year <= ? GROUP BY region, year, month"""
 
@@ -27,11 +36,13 @@ def plot(filename, begin_year, end_year):
     data = data.sort_index()
     data = data.interpolate()
     
-    path = os.path.dirname(os.path.dirname( __file__ ))
-    #print(path)
+    path = Path(application_path)
+    path_to_img = str(path.parents[0]) + "\\img\\plotting\\plot.png"
+    #print(str(path.parents[0]) + "\\img\\plotting\\plot.png") -> debugging filepath
+    
     
     try:
-        os.remove(path + "\\img\\plotting\\plot.png")
+        os.remove(path_to_img)
     except OSError:
         pass
     
@@ -44,14 +55,13 @@ def plot(filename, begin_year, end_year):
             plt.plot(region_data.index, region_data.temp, label=region)
         except ValueError:
             pass
-    #print(region_data)
     
     plt.title("Monthly Max Temperature By Region")
     plt.xlabel('Year')
     plt.ylabel('Monthly Max Temperature')
     plt.legend(bbox_to_anchor=(1.01, -0.10), loc='lower right')
     plt.tight_layout()
-    plt.savefig(path + "\\img\\plot.png")
+    plt.savefig(path_to_img)
     plt.close()
 
 

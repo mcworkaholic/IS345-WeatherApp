@@ -261,7 +261,7 @@ namespace Project_2
                 text = text.Replace(abbreviation[0], "Saint");
                 cityTextBox.Text = text;
             }
-            
+
             if (VerifyLocation(cityTextBox.Text, stateBox.GetItemText(stateBox.SelectedItem).ToString()) == true)
             {
                 string workingDirectory = Environment.CurrentDirectory;
@@ -283,7 +283,7 @@ namespace Project_2
                             {
                                 string latitude = (String.Format("{0}", reader["LATITUDE"]));
                                 string longitude = (String.Format("{0}", reader["LONGITUDE"]));
-                                
+
                                 // Calls openweathermap.org's API to get weather conditions
                                 // example api call: https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API key}
 
@@ -317,7 +317,7 @@ namespace Project_2
                                         string[] snow = { "600", "601", "602", "620", "621", "622" };
                                         string[] sleet = { "611", "612", "613", "615", "616" };
                                         string[] rain = { "511", "520", "521", "522", "531" };
-                                        string[] thunderstorms = {"210", "211", "212", "221"};
+                                        string[] thunderstorms = { "210", "211", "212", "221" };
                                         string[] partCldDyRain = { "501", "502", "503", "504" };
                                         string[] overcastNight = { "03n", "04n" };
 
@@ -416,10 +416,10 @@ namespace Project_2
                                         descriptionLabel.Visible = true;
                                         tempLabel2.Visible = true;
                                         tempTextBox.Text = fstring;
-                                        descriptionLabel.Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(description); 
+                                        descriptionLabel.Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(description);
                                         tempLabel2.Text = fstring + "°F";
-                                        tempLabel2.Location = new Point(((panel.Width - tempLabel2.Width)/ 2), 117);
-                                        descriptionLabel.Location= new Point(((panel.Width-descriptionLabel.Width) / 2) + 4, 141);
+                                        tempLabel2.Location = new Point(((panel.Width - tempLabel2.Width) / 2), 117);
+                                        descriptionLabel.Location = new Point(((panel.Width - descriptionLabel.Width) / 2) + 4, 141);
                                         iconBox.BringToFront();
                                     }
                                 }
@@ -563,10 +563,10 @@ namespace Project_2
             cityTextBox.ReadOnly = false;
             tempTextBox.ReadOnly = false;
             sourceButton.Visible = false;
-            newButton.Location = new System.Drawing.Point(108, 179); 
+            newButton.Location = new System.Drawing.Point(108, 179);
             blankBox.Visible = false;
             noDataLabel.Visible = false;
-            
+
 
             // Make all buttons visible and set to enabled
             foreach (Control c in controls)
@@ -729,7 +729,7 @@ namespace Project_2
             }
             return region;
         }
-       
+
 
         /* FilterDataGridView is used to get the highest temperature and the lowest temperature.
          Parameters include column name and what operation to perform, in this case SELECT MAX(temp) or
@@ -1178,79 +1178,112 @@ namespace Project_2
             searchTextBox.PlaceholderText = "Search...";
             removeSelectedButton.Visible = false;
         }
-        // Commits and formats changes after entry
-        private void saveButton_Click_1(object sender, EventArgs e)
+        private bool RowValidated()
         {
+            bool valid = false;
             ////Get all row changes from embedded DataTable of DataGridView's DataSource
-            DataRowCollection modifiedRows = ((DataTable)dataGridView1.DataSource).GetChanges(DataRowState.Modified).Rows;
-
-            //foreach (DataRow row in modifiedRows)
-            //{
-
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
                 // Disable readonly temporarily so that the region can be set if the user edits the "State" column
                 datatable.Columns[3].ReadOnly = false; // region
-            
+
                 // Get the last row edited
-                int lastRowEdited = dataGridView1.CurrentCell.RowIndex;
+                //int lastRowEdited = dataGridView1.CurrentCell.RowIndex;
                 double temp;
 
                 // Check the last row edited for errors
-
                 // Change city to titlecase for SQL query and formatting
-                string city = dataGridView1.Rows[lastRowEdited].Cells["City"].Value.ToString();
+                string city = dataGridView1.Rows[row.Index].Cells["City"].Value.ToString();
                 city = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(city);
-                dataGridView1.Rows[lastRowEdited].Cells[1].Value = city;
+                dataGridView1.Rows[row.Index].Cells[1].Value = city;
 
-                string state = dataGridView1.Rows[lastRowEdited].Cells["State"].Value.ToString().ToUpper();
-                dataGridView1.Rows[lastRowEdited].Cells[2].Value = state;
-                dataGridView1.Rows[lastRowEdited].Cells[3].Value = ReturnRegion(state); // setting region upon edit of state value
+                string state = dataGridView1.Rows[row.Index].Cells["State"].Value.ToString().ToUpper();
+                dataGridView1.Rows[row.Index].Cells[2].Value = state;
+                dataGridView1.Rows[row.Index].Cells[3].Value = ReturnRegion(state); // setting region upon edit of state value
 
-                string tempString = dataGridView1.Rows[lastRowEdited].Cells["Temperature"].Value.ToString();
-                string date = dataGridView1.Rows[lastRowEdited].Cells["Date"].Value.ToString();
+                string tempString = dataGridView1.Rows[row.Index].Cells["Temperature"].Value.ToString();
+                string date = dataGridView1.Rows[row.Index].Cells["Date"].Value.ToString();
 
                 // Regex for mm/dd//yyyy
                 string pattern = @"^((((0[13578])|([13578])|(1[02]))[\/](([1-9])|([0-2][0-9])|(3[01])))|(((0[469])|([469])|(11))[\/](([1-9])|([0-2][0-9])|(30)))|((2|02)[\/](([1-9])|([0-2][0-9]))))[\/]\d{4}$|^\d{4}$";
-
                 string abbreviation = "St.";
-                if (city != null && city.Contains(abbreviation))
+                if (city.Contains(abbreviation))
                 {
                     city = city.Replace(abbreviation, "Saint");
+                    if (VerifyLocation(city, state) == false)
+                    {
+                        dataGridView1.Rows[row.Index].ErrorText = "Location could not be verified";
+                        dataGridView1.ReadOnly = false;
+                    }
+                    else if (date == null || !System.Text.RegularExpressions.Regex.IsMatch(date, pattern))
+                    {
+                        dataGridView1.Rows[row.Index].ErrorText = "Date must be in mm/dd/yyyy format";
+                        dataGridView1.ReadOnly = false;
+                    }
+                    else if (!double.TryParse(tempString, out temp) || temp < -70 || temp > 140)
+                    {
+                        int lastRowEdited = dataGridView1.CurrentCell.RowIndex;
+                        dataGridView1.Rows[lastRowEdited].Cells["Temperature"].Value = 0.00;
+                        dataGridView1.Rows[row.Index].ErrorText = "Temperature must be between -70 & 140";
+                        dataGridView1.ReadOnly = false;
+                    }
+                    else
+                    {
+                        dataGridView1.Rows[row.Index].ErrorText = "";
+                        valid = true;
+                    }
                 }
-                if (city != null && state != null && VerifyLocation(city, state) == false)
+                else 
                 {
-                    dataGridView1.Rows[lastRowEdited].ErrorText = "Location could not be verified";
-                    MessageBox.Show("Location could not be verified. Please correct the errors in the DataGridView before saving.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
+                    if (VerifyLocation(city, state) == false)
+                    {
+                        dataGridView1.Rows[row.Index].ErrorText = "Location could not be verified";
+                        dataGridView1.ReadOnly = false;
+                    }
+                    else if (date == null || !System.Text.RegularExpressions.Regex.IsMatch(date, pattern))
+                    {
+                        dataGridView1.Rows[row.Index].ErrorText = "Date must be in mm/dd/yyyy format";
+                        dataGridView1.ReadOnly = false;
+                    }
+                    else if (!double.TryParse(tempString, out temp) || temp < -70 || temp > 140)
+                    {
+                        int lastRowEdited = dataGridView1.CurrentCell.RowIndex;
+                        dataGridView1.Rows[lastRowEdited].Cells["Temperature"].Value = 0.00;
+                        dataGridView1.Rows[row.Index].ErrorText = "Temperature must be between -70 & 140";
+                        dataGridView1.ReadOnly = false;
+                    }
+                    else
+                    {
+                        dataGridView1.Rows[row.Index].ErrorText = "";
+                        valid = true;
+                    }
                 }
-
-                else if (date == null || !System.Text.RegularExpressions.Regex.IsMatch(date, pattern))
-                {
-                    dataGridView1.Rows[lastRowEdited].ErrorText = "Date must be in mm/dd/yyyy format";
-                    MessageBox.Show("Date must be in mm/dd/yyyy format. Please correct the errors in the DataGridView before saving.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-                else if (!double.TryParse(tempString, out temp) || (temp < -70 || temp > 140))
-                {
-                    dataGridView1.Rows[lastRowEdited].ErrorText = "Temperature must be between -70 & 140";
-                    MessageBox.Show(" Temperature must be between -70 & 140°F. Please correct the errors in the DataGridView before saving.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-                else
-                {
-                    dataGridView1.Rows[lastRowEdited].ErrorText = "";
-                    saveButton.Visible = false;
-                    // Disable editing mode on the DataGridView
-                    dataGridView1.ReadOnly = true;
-                    // Create a new command builder
-                    SQLiteCommandBuilder cmdBuilder = new SQLiteCommandBuilder(adapter);
-                    // Update the database with the changes made to the DataTable
-                    adapter.Update(datatable);
-                    ReloadAVGTextBoxes();
-                    // Set the EditMode back to 'EditProgrammatically'
-                    dataGridView1.EditMode = DataGridViewEditMode.EditProgrammatically;
-                    dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
-                }
-            //}
+            }
+            return valid;
+        }
+        // Commits and formats changes after entry
+        private void saveButton_Click_1(object sender, EventArgs e)
+        {
+            //{
+            if (RowValidated() == true)
+            {
+                saveButton.Visible = false;
+                // Disable editing mode on the DataGridView
+                dataGridView1.ReadOnly = true;
+                // Create a new command builder
+                SQLiteCommandBuilder cmdBuilder = new SQLiteCommandBuilder(adapter);
+                // Update the database with the changes made to the DataTable
+                adapter.Update(datatable);
+                ReloadAVGTextBoxes();
+                // Set the EditMode back to 'EditProgrammatically'
+                dataGridView1.EditMode = DataGridViewEditMode.EditProgrammatically;
+                dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
+            }
+            else
+            {
+                saveButton.Visible = true;
+                dataGridView1.ReadOnly = false;
+            }
         }
 
         private void removeAllButton_Click(object sender, EventArgs e)

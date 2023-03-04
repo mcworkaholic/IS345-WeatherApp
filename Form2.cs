@@ -2,14 +2,18 @@
 {
     public partial class Form2 : Form
     {
+
         public Form2()
         {
             InitializeComponent();
         }
         private void Form2_Load(object sender, EventArgs e)
         {
-            var yearList1 = Enumerable.Range(1920, 2023 - 1920 + 1).ToList();
-            var yearList2 = Enumerable.Range(1920, 2023 - 1920 + 1).ToList();
+            // Calling method from form1 to get produce year range from DB
+            int min = WeatherForm.weatherForm.YearRangeFromDB().Item1;
+            int max = WeatherForm.weatherForm.YearRangeFromDB().Item2;
+            var yearList1 = Enumerable.Range(min, max - min + 1).ToList();
+            var yearList2 = Enumerable.Range(min, max - min + 1).ToList();
             beginBox.DataSource = yearList1;
             endBox.DataSource = yearList2;
         }

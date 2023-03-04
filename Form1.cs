@@ -72,7 +72,6 @@ using Newtonsoft.Json;
 using System.Data;
 using System.Data.Entity.Core.Common.CommandTrees.ExpressionBuilder;
 using System.Data.SQLite;
-using System.Diagnostics;
 using System.Globalization;
 using TextBox = System.Windows.Forms.TextBox;
 
@@ -80,6 +79,11 @@ namespace Project_2
 {
     public partial class WeatherForm : Form
     {
+        internal static Form2? form2;
+        internal static Form3? form3;
+        internal static Form4? form4;
+        internal static Form5? form5;
+        internal static WeatherForm? weatherForm;
         public class US_State
         {
             public string Name { get; set; }
@@ -94,7 +98,7 @@ namespace Project_2
                 Region = region;
             }
         }
-        static class StateArray
+        public static class StateArray
         {
             public static List<US_State> states;
 
@@ -161,21 +165,27 @@ namespace Project_2
         public WeatherForm()
         {
             InitializeComponent();
+            weatherForm = this;
+            weatherForm.CenterToScreen();
             // Array of all controls whose visibility is toggled in the form on data load and form reset
-            controls = new Control[] { addButton, searchTextBox, clearButton, refreshBox2, highButton, lowButton, getButton,
-             bulkInsertButton, resetButton, editButton, plotButton, removeButton, removeAllButton};
+            controls = new Control[] { addButton, filterBox, searchTextBox, clearButton, refreshBox2, highButton, lowButton, getButton,
+            resetButton, editButton, removeButton, moreButton};
         }
 
         // GLOBALS, to be altered by the application
         SQLiteConnection con;
         DialogResult dialogFileConfirm;
         SQLiteCommand cmd;
+        string[] extraConditions = new string[5];
         string Query;
-        string newDbFile;
+        string Statement;
+        public string newDbFile;
         DataTable datatable;
+        DataTable filteredDataTable;
         SQLiteDataAdapter adapter;
-        private bool newButtonPressed = false;
-        private string selectedFile;
+        public bool newButtonPressed = false;
+        public bool getButtonPressed = false;
+        public string selectedFile;
         DataView DV;
 
         // Queries for the avg textboxes, adaptability is a concern
@@ -252,8 +262,8 @@ namespace Project_2
         // Needs to be optimized
         private void getButton_Click(object sender, EventArgs e)
         {
+            getButtonPressed = true;
             cityTextBox.Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(cityTextBox.Text);
-
             string[] abbreviation = { "St.", "st." };
             if (abbreviation.Any(cityTextBox.Text.Contains))
             {
@@ -261,175 +271,161 @@ namespace Project_2
                 text = text.Replace(abbreviation[0], "Saint");
                 cityTextBox.Text = text;
             }
-
             if (VerifyLocation(cityTextBox.Text, stateBox.GetItemText(stateBox.SelectedItem).ToString()) == true)
             {
                 string workingDirectory = Environment.CurrentDirectory;
                 string dataDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "/Data";
                 string iconDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "/img/icons-weather";
 
-                using (SQLiteConnection con = new SQLiteConnection(@"data source =" + Path.Combine(dataDirectory, "cities.db")))
+                // Calls openweathermap.org's API to get weather conditions
+                // example api call: https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API key}
+
+                using (var client = new HttpClient())
                 {
-                    try
+                    bool valid;
+                    var apiKey = "bdd9cf8717a09ffd505acc42dac63d73"; //do not abuse, may need to get a new API key in the future
+                    var response = client.GetAsync($@"https://api.openweathermap.org/data/2.5/weather?lat={getCoordinates().Item1}&lon={getCoordinates().Item2}&appid={apiKey}").Result;
+                    response.EnsureSuccessStatusCode();
+                    var content = response.Content.ReadAsStringAsync().Result;
+                    if (content.Length == 0 || content == "[]")
                     {
-                        con.Open();
-                        Query = "SELECT US_CITIES.LATITUDE, US_CITIES.LONGITUDE from US_CITIES INNER JOIN US_STATES ON US_CITIES.ID_STATE = US_STATES.ID WHERE US_CITIES.CITY = @CITY AND US_STATES.STATE_CODE = @STATE;";
-                        SQLiteCommand cmd = new SQLiteCommand(Query, con);
-                        cmd.Parameters.AddWithValue("@CITY", cityTextBox.Text);
-                        cmd.Parameters.AddWithValue("@STATE", stateBox.GetItemText(stateBox.SelectedItem).ToString());
-                        using (SQLiteDataReader reader = cmd.ExecuteReader())
+                        valid = false;
+                    }
+                    else
+                    {
+                        dynamic details = JsonConvert.DeserializeObject(content);
+                        string description = details["weather"][0]["description"].ToString();
+                        string kelvin = details["main"]["temp"].ToString();
+                        // Fahrenheit = 1.8*(K-273) + 32
+                        // Celsius = K – 273.15
+                        double v = double.Parse(kelvin) - 273;
+                        double celsius = Math.Round(v - .15);
+                        double fahrenheit = Math.Round(((1.8 * v) + 32), 2);
+                        string cstring = celsius.ToString();
+                        string fstring = fahrenheit.ToString();
+                        string icon = details["weather"][0]["icon"].ToString();
+                        string id = details["weather"][0]["id"].ToString();
+                        string weatherCondition = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(details["weather"][0]["description"].ToString());
+                        string pressure = details["main"]["pressure"].ToString();
+                        string humidity = details["main"]["humidity"].ToString();
+                        string visibility = details["visibility"].ToString();
+                        string windSpeed = details["wind"]["speed"].ToString();
+                        double windSpeedMPH = Math.Round((double.Parse(windSpeed) * 2.23694), 2);
+                        double visibilityFeet = Math.Round(double.Parse(visibility) * 3.28084, 2);
+                        extraConditions[0] = weatherCondition;
+                        extraConditions[1] = humidity;
+                        extraConditions[2] = visibilityFeet.ToString();
+                        extraConditions[3] = windSpeedMPH.ToString();
+                        extraConditions[4] = pressure;
+                        string[] drizzle = { "300", "301", "302", "310", "311", "312", "313", "314", "321" };
+                        string[] thunderstormsRain = { "200", "201", "202", "230", "231", "232" };
+                        string[] snow = { "600", "601", "602", "620", "621", "622" };
+                        string[] sleet = { "611", "612", "613", "615", "616" };
+                        string[] rain = { "511", "520", "521", "522", "531" };
+                        string[] thunderstorms = { "210", "211", "212", "221" };
+                        string[] partCldDyRain = { "501", "502", "503", "504" };
+                        string[] overcastNight = { "03n", "04n" };
+
+                        if (drizzle.Any(id.Contains))
                         {
-                            if (reader.Read())
+                            iconBox.ImageLocation = iconDirectory + "/drizzle.gif";
+                        }
+                        else if (thunderstormsRain.Any(id.Contains))
+                        {
+                            iconBox.ImageLocation = iconDirectory + "/thunderstorms-rain.gif";
+                        }
+                        else if (snow.Any(id.Contains))
+                        {
+                            iconBox.ImageLocation = iconDirectory + "/snow.gif";
+                        }
+                        else if (sleet.Any(id.Contains))
+                        {
+                            iconBox.ImageLocation = iconDirectory + "/sleet.gif";
+                        }
+                        else if (rain.Any(id.Contains))
+                        {
+                            iconBox.ImageLocation = iconDirectory + "/rain.gif";
+                        }
+                        else if (thunderstorms.Any(id.Contains))
+                        {
+                            iconBox.ImageLocation = iconDirectory + "/thunderstorms.gif";
+                        }
+                        else if (partCldDyRain.Any(id.Contains))
+                        {
+                            iconBox.ImageLocation = iconDirectory + "/partly-cloudy-day-rain.gif";
+                        }
+                        else if (icon == "01d")
+                        {
+                            iconBox.ImageLocation = iconDirectory + "/clear-day.gif";
+                        }
+                        else if (icon == "01n")
+                        {
+                            iconBox.ImageLocation = iconDirectory + "/clear-night.gif";
+                        }
+                        else if (icon == "02d")
+                        {
+                            iconBox.ImageLocation = iconDirectory + "/partly-cloudy-day.gif";
+                        }
+                        else if (icon == "02n")
+                        {
+                            iconBox.ImageLocation = iconDirectory + "/partly-cloudy-night.gif";
+                        }
+                        else if (icon == "03d")
+                        {
+                            iconBox.ImageLocation = iconDirectory + "/overcast-day.gif";
+                        }
+                        else if (overcastNight.Any(id.Contains))
+                        {
+                            iconBox.ImageLocation = iconDirectory + "/overcast-night.gif";
+                        }
+                        else
+                        {
+                            switch (id)
                             {
-                                string latitude = (String.Format("{0}", reader["LATITUDE"]));
-                                string longitude = (String.Format("{0}", reader["LONGITUDE"]));
 
-                                // Calls openweathermap.org's API to get weather conditions
-                                // example api call: https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API key}
+                                case "500":
+                                    iconBox.ImageLocation = iconDirectory + "/partly-cloudy-day-drizzle.gif";
+                                    break;
 
-                                using (var client = new HttpClient())
-                                {
-                                    bool valid;
-                                    var apiKey = "bdd9cf8717a09ffd505acc42dac63d73"; //do not abuse, may need to get a new API key in the future
-                                    var response = client.GetAsync($@"https://api.openweathermap.org/data/2.5/weather?lat={latitude}&lon={longitude}&appid={apiKey}").Result;
-                                    response.EnsureSuccessStatusCode();
-                                    var content = response.Content.ReadAsStringAsync().Result;
-                                    if (content.Length == 0 || content == "[]")
-                                    {
-                                        valid = false;
-                                    }
-                                    else
-                                    {
-                                        dynamic details = JsonConvert.DeserializeObject(content);
-                                        string description = details["weather"][0]["description"].ToString();
-                                        string kelvin = details["main"]["temp"].ToString();
-                                        // Fahrenheit = 1.8*(K-273) + 32
-                                        // Celsius = K – 273.15
-                                        double v = double.Parse(kelvin) - 273;
-                                        double celsius = Math.Round(v - .15);
-                                        double fahrenheit = Math.Round(((1.8 * v) + 32), 2);
-                                        string cstring = celsius.ToString();
-                                        string fstring = fahrenheit.ToString();
-                                        string icon = details["weather"][0]["icon"].ToString();
-                                        string id = details["weather"][0]["id"].ToString();
-                                        string[] drizzle = { "300", "301", "302", "310", "311", "312", "313", "314", "321" };
-                                        string[] thunderstormsRain = { "200", "201", "202", "230", "231", "232" };
-                                        string[] snow = { "600", "601", "602", "620", "621", "622" };
-                                        string[] sleet = { "611", "612", "613", "615", "616" };
-                                        string[] rain = { "511", "520", "521", "522", "531" };
-                                        string[] thunderstorms = { "210", "211", "212", "221" };
-                                        string[] partCldDyRain = { "501", "502", "503", "504" };
-                                        string[] overcastNight = { "03n", "04n" };
+                                case "701":
+                                    iconBox.ImageLocation = iconDirectory + "/mist.gif";
+                                    break;
+                                case "711":
+                                    iconBox.ImageLocation = iconDirectory + "/smoke.gif";
+                                    break;
 
-                                        if (drizzle.Any(id.Contains))
-                                        {
-                                            iconBox.ImageLocation = iconDirectory + "/drizzle.gif";
-                                        }
-                                        else if (thunderstormsRain.Any(id.Contains))
-                                        {
-                                            iconBox.ImageLocation = iconDirectory + "/thunderstorms-rain.gif";
-                                        }
-                                        else if (snow.Any(id.Contains))
-                                        {
-                                            iconBox.ImageLocation = iconDirectory + "/snow.gif";
-                                        }
-                                        else if (sleet.Any(id.Contains))
-                                        {
-                                            iconBox.ImageLocation = iconDirectory + "/sleet.gif";
-                                        }
-                                        else if (rain.Any(id.Contains))
-                                        {
-                                            iconBox.ImageLocation = iconDirectory + "/rain.gif";
-                                        }
-                                        else if (thunderstorms.Any(id.Contains))
-                                        {
-                                            iconBox.ImageLocation = iconDirectory + "/thunderstorms.gif";
-                                        }
-                                        else if (partCldDyRain.Any(id.Contains))
-                                        {
-                                            iconBox.ImageLocation = iconDirectory + "/partly-cloudy-day-rain.gif";
-                                        }
-                                        else if (icon == "01d")
-                                        {
-                                            iconBox.ImageLocation = iconDirectory + "/clear-day.gif";
-                                        }
-                                        else if (icon == "01n")
-                                        {
-                                            iconBox.ImageLocation = iconDirectory + "/clear-night.gif";
-                                        }
-                                        else if (icon == "02d")
-                                        {
-                                            iconBox.ImageLocation = iconDirectory + "/partly-cloudy-day.gif";
-                                        }
-                                        else if (icon == "02n")
-                                        {
-                                            iconBox.ImageLocation = iconDirectory + "/partly-cloudy-night.gif";
-                                        }
-                                        else if (icon == "03d")
-                                        {
-                                            iconBox.ImageLocation = iconDirectory + "/overcast-day.gif";
-                                        }
-                                        else if (overcastNight.Any(id.Contains))
-                                        {
-                                            iconBox.ImageLocation = iconDirectory + "/overcast-night.gif";
-                                        }
-                                        else
-                                        {
-                                            switch (id)
-                                            {
+                                case "721":
+                                    iconBox.ImageLocation = iconDirectory + "/haze-day.gif";
+                                    break;
+                                case "731":
+                                    iconBox.ImageLocation = iconDirectory + "/dust-day.gif";
+                                    break;
 
-                                                case "500":
-                                                    iconBox.ImageLocation = iconDirectory + "/partly-cloudy-day-drizzle.gif";
-                                                    break;
+                                case "761":
+                                    iconBox.ImageLocation = iconDirectory + "/dust-day.gif";
+                                    break;
+                                case "771":
+                                    iconBox.ImageLocation = iconDirectory + "/wind.gif";
+                                    break;
 
-                                                case "701":
-                                                    iconBox.ImageLocation = iconDirectory + "/mist.gif";
-                                                    break;
-                                                case "711":
-                                                    iconBox.ImageLocation = iconDirectory + "/smoke.gif";
-                                                    break;
+                                case "781":
+                                    iconBox.ImageLocation = iconDirectory + "/tornado.gif";
+                                    break;
 
-                                                case "721":
-                                                    iconBox.ImageLocation = iconDirectory + "/haze-day.gif";
-                                                    break;
-                                                case "731":
-                                                    iconBox.ImageLocation = iconDirectory + "/dust-day.gif";
-                                                    break;
-
-                                                case "761":
-                                                    iconBox.ImageLocation = iconDirectory + "/dust-day.gif";
-                                                    break;
-                                                case "771":
-                                                    iconBox.ImageLocation = iconDirectory + "/wind.gif";
-                                                    break;
-
-                                                case "781":
-                                                    iconBox.ImageLocation = iconDirectory + "/tornado.gif";
-                                                    break;
-
-                                                default:
-                                                    iconBox.ImageLocation = iconDirectory + "/partly-cloudy-day.gif";
-                                                    break;
-                                            }
-                                        }
-                                        iconBox.Visible = true;
-                                        descriptionLabel.Visible = true;
-                                        tempLabel2.Visible = true;
-                                        tempTextBox.Text = fstring;
-                                        descriptionLabel.Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(description);
-                                        tempLabel2.Text = fstring + "°F";
-                                        tempLabel2.Location = new Point(((panel.Width - tempLabel2.Width) / 2), 117);
-                                        descriptionLabel.Location = new Point(((panel.Width - descriptionLabel.Width) / 2) + 4, 141);
-                                        iconBox.BringToFront();
-                                    }
-                                }
+                                default:
+                                    iconBox.ImageLocation = iconDirectory + "/partly-cloudy-day.gif";
+                                    break;
                             }
                         }
-                    }
-                    // Exception handling
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Error: " + ex.Message);
+                        iconBox.Visible = true;
+                        descriptionLabel.Visible = true;
+                        tempLabel2.Visible = true;
+                        tempTextBox.Text = fstring;
+                        descriptionLabel.Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(description);
+                        tempLabel2.Text = fstring + "°F";
+                        tempLabel2.Location = new Point(((panel.Width - tempLabel2.Width) / 2), 117);
+                        descriptionLabel.Location = new Point(((panel.Width - descriptionLabel.Width) / 2) + 4, 141);
+                        iconBox.BringToFront();
                     }
                 }
             }
@@ -439,10 +435,36 @@ namespace Project_2
                 cityTextBox.Focus();
             }
         }
+        private (string, string) getCoordinates()
+        {
+            string latitude = "";
+            string longitude = "";
+            string workingDirectory = Environment.CurrentDirectory;
+            string dataDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "/Data";
+            using (SQLiteConnection con = new SQLiteConnection(@"data source =" + Path.Combine(dataDirectory, "cities.db")))
+            {
+                con.Open();
+                Query = "SELECT US_CITIES.LATITUDE, US_CITIES.LONGITUDE from US_CITIES INNER JOIN US_STATES ON US_CITIES.ID_STATE = US_STATES.ID WHERE US_CITIES.CITY = @CITY AND US_STATES.STATE_CODE = @STATE;";
+                SQLiteCommand cmd = new SQLiteCommand(Query, con);
+                cmd.Parameters.AddWithValue("@CITY", cityTextBox.Text);
+                cmd.Parameters.AddWithValue("@STATE", stateBox.GetItemText(stateBox.SelectedItem).ToString());
+                using (SQLiteDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        latitude = (String.Format("{0}", reader["LATITUDE"]));
+                        longitude = (String.Format("{0}", reader["LONGITUDE"]));
+                    }
+                }
+            }
+            return (latitude, longitude);
+        }
         private void addButton_Click(object sender, EventArgs e)
         {
+            DateTime time;
             string workingDirectory = Environment.CurrentDirectory;
             string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName;
+            string dataDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "/Data";
 
             // Changes whatever the user enters into title case (princeton -> Princeton) or (san francisco -> San Francisco)
             cityTextBox.Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(cityTextBox.Text);
@@ -480,23 +502,48 @@ namespace Project_2
                     dataGridView1.Update();
                     dataGridView1.Refresh();
 
-                    // sets date format
-                    string theDate = dateTimePicker1.Value.ToString("M/dd/yyyy");
-                    string year = theDate.Substring(5, 4);
-                    string month = theDate.Substring(0, 1);
-                    string day = theDate.Substring(2, 2);
-
-                    if (day.StartsWith("0"))
-                    {
-                        day = day.Remove(day.IndexOf("0"), 1);
-                    }
 
                     //MessageBox.Show("theDate: " + theDate + " " + "year : " + year + " " + " month: " + month + " day: " + day);  -> debugging
                     con = new SQLiteConnection(@"data source =" + CheckCurrentFile());
+                    if (getButtonPressed == false)
+                    {
+                        time = dateTimePicker1.Value.ToUniversalTime();
+                        // sets date format
+                        string utcDate = time.ToString("yyyy-MM-dd");
+                        string utcTime = time.ToString("HH:mm:ss");
+                        //MessageBox.Show(time.ToString());
+                        string year = utcDate[..4];
+                        string month = utcDate[..1];
+                        string day = utcDate.Substring(2, 2);
+
+                        if (day.StartsWith("0"))
+                        {
+                            day = day.Remove(day.IndexOf("0"), 1);
+                        }
+                        Statement = string.Format("INSERT INTO weather (city, state, latitude, longitude, region, date_utc, time_utc, year, month, day, temp) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}','{8}', '{9}','{10}')", cityTextBox.Text, stateBox.Text, getCoordinates().Item1, getCoordinates().Item2, ReturnRegion(stateBox.GetItemText(stateBox.SelectedItem)), utcDate, utcTime, year, month, day, tempTextBox.Text);
+                    }
+                    else
+                    {
+                        time = DateTime.UtcNow;
+                        // sets date format
+                        string utcDate = time.ToString("yyyy-MM-dd");
+                        string utcTime = time.ToString("HH:mm:ss");
+                        //MessageBox.Show(time.ToString());
+                        string year = utcDate[..4];
+                        string month = utcDate[..1];
+                        string day = utcDate.Substring(2, 2);
+
+                        if (day.StartsWith("0"))
+                        {
+                            day = day.Remove(day.IndexOf("0"), 1);
+                        }
+                        Statement = string.Format("INSERT INTO weather (city, state, latitude, longitude, region, date_utc, time_utc, year, month, day, temp, weather_condition, humidity_percent, visibility_Feet, wind_speed_MPH, pressure_hPa) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}', '{10}', '{11}', '{12}', '{13}', '{14}', '{15}')", cityTextBox.Text, stateBox.Text, getCoordinates().Item1, getCoordinates().Item2, ReturnRegion(stateBox.GetItemText(stateBox.SelectedItem)), utcDate, utcTime, year, month, day, tempTextBox.Text, extraConditions[0], extraConditions[1], extraConditions[2], extraConditions[3], extraConditions[4]);
+                        Array.Clear(extraConditions);
+                    }
+
                     // Create a new SQLiteCommand object with the INSERT INTO statement
-                    Query = string.Format("INSERT INTO weather (city, state, region, date, year, month, day, temp) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}')", cityTextBox.Text, stateBox.Text, ReturnRegion(stateBox.GetItemText(stateBox.SelectedItem)), theDate, year, month, day, tempTextBox.Text);
                     con.Open();
-                    cmd = new SQLiteCommand(Query, con);
+                    cmd = new SQLiteCommand(Statement, con);
                     cmd.ExecuteNonQuery();
                     con.Close();
 
@@ -532,7 +579,10 @@ namespace Project_2
 
         private void clearButton_Click(object sender, EventArgs e)
         {
+            //MessageBox.Show(YearRangeFromDB().ToString());
             EmptyTextBoxes();
+            getButtonPressed = false;
+            Array.Clear(extraConditions);
         }
         // reloads selected textboxes and their averages
         private void ReloadAVGTextBoxes()
@@ -592,7 +642,7 @@ namespace Project_2
             con.Open();
 
             // Create a command object to retrieve all data from the "weather" table
-            Query = "SELECT weather_id AS ID, city AS City, state AS State, region as Region, date AS Date, temp AS Temperature FROM weather";
+            Query = "SELECT weather_id AS ID, city AS City, state AS State, region as Region, date_utc AS Date, temp AS Temperature FROM weather";
             cmd = new SQLiteCommand(Query, con);
 
             // Create a new datatable to store the retrieved data
@@ -619,7 +669,7 @@ namespace Project_2
             dataGridView1.Columns[2].Width = 40;
             dataGridView1.Columns[3].Width = 150;
             dataGridView1.Columns[4].Width = 80;
-            dataGridView1.Columns[3].DefaultCellStyle.Format = "MM/dd/yyyy";
+            dataGridView1.Columns[3].DefaultCellStyle.Format = "YYYY-MM-DD";
             dataGridView1.Columns[3].ValueType = typeof(DateTime);
             dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
             descriptionLabel.Visible = false;
@@ -770,7 +820,7 @@ namespace Project_2
                 removeSelectedButton.Visible = true;
                 DV = new DataView(datatable);
                 // searchtextbox db filtering
-                DV.RowFilter = string.Format("city LIKE '%{0}%' OR state LIKE '%{1}%' OR region LIKE '%{2}%'", searchTextBox.Text, searchTextBox.Text, searchTextBox.Text);
+                DV.RowFilter = string.Format("city LIKE '%{0}%'", searchTextBox.Text);
                 dataGridView1.DataSource = DV.ToTable();
                 dataGridView1.SelectAll();
             }
@@ -813,88 +863,51 @@ namespace Project_2
         // newButton_Click creates a new database in the project directory and switches to it
         private void newButton_Click(object sender, EventArgs e)
         {
+            string dbName = "";
             DialogResult result = MessageBox.Show("Are you sure you want to create a new database?", "Create Database", MessageBoxButtons.YesNo);
             if (result == DialogResult.Yes)
             {
-                newButtonPressed = true;
-                // Generate a random number to be appended to the file name
-                Random random = new Random();
-                int randomNumber = random.Next();
-                string newFileName = "weather_" + randomNumber + ".db";
-
-                // Get the current directory
-                string workingDirectory = Environment.CurrentDirectory;
-                string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "/Data";
-
-                // Create a new .db file in the current directory with a unique name
-                newDbFile = Path.Combine(projectDirectory, newFileName);
-                string newDbPath = Path.Combine(projectDirectory, newFileName);
-                if (!File.Exists(newDbPath))
+                using Form5 form5 = new Form5();
+                if (form5.ShowDialog() == DialogResult.OK)
                 {
-                    SQLiteConnection.CreateFile(newDbPath);
-                }
+                    dbName = form5.getDBName();
+                    newButtonPressed = true;
+                    string newFileName = dbName + ".db";
+                    form5.Close();
 
-                // Connect to the new .db file
-                SQLiteConnection con = new SQLiteConnection(@"data source =" + newDbFile);
-                con.Open();
+                    // Get the current directory
+                    string workingDirectory = Environment.CurrentDirectory;
+                    string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "/Data";
 
-                // Create a table with the same column names, properties as the existing one
-                string createTableQuery = "CREATE TABLE weather (weather_id INTEGER PRIMARY KEY AUTOINCREMENT, city TEXT NOT NULL, state TEXT NOT NULL, region TEXT NOT NULL, date TEXT NOT NULL, year TEXT NOT NULL, month TEXT NOT NULL, day TEXT NOT NULL, temp REAL NOT NULL)";
-
-                // Perform CREATE DDL and close connection
-                SQLiteCommand cmdCreate = new SQLiteCommand(createTableQuery, con);
-                cmdCreate.ExecuteNonQuery();
-                con.Close();
-
-                // Buttons
-                EnableAll();
-
-                // Reload the data grid with the new .db file
-                LoadData(newDbFile);
-                ReloadAVGTextBoxes();
-            }
-        }
-        private void csvImport()
-        {
-            // Import from CSV in Project folder and insert into current db/datagrid
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "CSV files (*.csv)|*.csv";
-            if (openFileDialog.ShowDialog() == DialogResult.OK)
-            {
-                string filePath = openFileDialog.FileName;
-
-                // Read the CSV file and insert the data into the SQLite database
-                using (SQLiteConnection con = new SQLiteConnection(@"data source =" + CheckCurrentFile()))
-                {
+                    // Create a new .db file in the current directory with a unique name
+                    newDbFile = Path.Combine(projectDirectory, newFileName);
+                    string newDbPath = Path.Combine(projectDirectory, newFileName);
+                    if (!File.Exists(newDbPath))
+                    {
+                        SQLiteConnection.CreateFile(newDbPath);
+                    }
+                    // Connect to the new .db file
+                    SQLiteConnection con = new SQLiteConnection(@"data source =" + newDbFile);
                     con.Open();
 
-                    using (var reader = new StreamReader(filePath))
-                    {
-                        // hacky way of skipping the first line
-                        reader.ReadLine();
+                    // Create a table with the same column names, properties as the existing one
+                    string createTableQuery = "CREATE TABLE weather (weather_id INTEGER PRIMARY KEY AUTOINCREMENT, city TEXT NOT NULL, state TEXT NOT NULL, latitude TEXT NOT NULL, longitude TEXT NOT NULL, region TEXT NOT NULL, date_utc TEXT NOT NULL, time_utc TEXT NOT NULL, year TEXT NOT NULL, month TEXT NOT NULL, day TEXT NOT NULL, temp REAL NOT NULL, weather_condition TEXT, humidity_percent REAL, visibility_Feet REAL, wind_speed_MPH REAL, pressure_hPa REAL)";
 
-                        while (!reader.EndOfStream)
-                        {
-                            var line = reader.ReadLine();
-                            var values = line.Split(',');
-
-                            // Insert the data into the SQLite database
-                            Query = string.Format("INSERT INTO weather (city, state, region, date, year, month, day, temp) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}')", values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7]);
-                            cmd = new SQLiteCommand(Query, con);
-                            cmd.ExecuteNonQuery();
-                        }
-                    }
+                    // Perform CREATE DDL and close connection
+                    SQLiteCommand cmdCreate = new SQLiteCommand(createTableQuery, con);
+                    cmdCreate.ExecuteNonQuery();
                     con.Close();
-                    LoadData(CheckCurrentFile());
+
+                    // Buttons
+                    EnableAll();
+
+                    // Reload the data grid with the new .db file
+                    LoadData(newDbFile);
+                    ReloadAVGTextBoxes();
                 }
             }
+            
         }
-        private void bulkInsertButton_Click(object sender, EventArgs e)
-        {
-            csvImport();
-            ReloadAVGTextBoxes();
-        }
-
         private void cancelButton_Click(object sender, EventArgs e)
         {
             // exit out of "removal" mode
@@ -910,6 +923,8 @@ namespace Project_2
             dataGridView1.DataSource = null;
             dateTimePicker1.Value = DateTime.Now;
             newButtonPressed = false;
+            getButtonPressed = false;
+            Array.Clear(extraConditions);
 
             // Upper left-hand textboxes
             EmptyTextBoxes();
@@ -982,7 +997,7 @@ namespace Project_2
         }
 
         // returns the filename of the db in use
-        private string CheckCurrentFile()
+        public string CheckCurrentFile()
         {
             string filename = "";
             if (!newButtonPressed)
@@ -997,94 +1012,40 @@ namespace Project_2
             }
             return filename;
         }
-
-        /*
-        plotButton_Click is a method that calls a python script "tempPlotter.py" located in the "Scripts" directory, which generates a plot/image of the data in the currently selected database and saves it in the "img" directory.
-
-        The script requires a working installation of python 3.10 and the libraries specified in the "requirements.txt" file in the "Scripts" directory to be installed.
-
-        The method takes in the user's selected year range from a separate form, and passes it along with the current database file name as parameters to the script.
-
-        Once the script completes execution, the method displays the saved plot/image in a new form/window.
-
-        Note that the method assumes that the correct version of python, interpreter and libraries are available and that the permissions for the "img" directory are set to read + write for the script to overwrite the plot image.
-        */
-        private void plotButton_Click(object sender, EventArgs e)
+        // Called by form2 to get valid years from whichever DB the user is currently viewing
+        public (int, int) YearRangeFromDB()
         {
+            string min;
+            string max;
             string workingDirectory = Environment.CurrentDirectory;
-            string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName;
-
-            var selectedYearRange = ("", "");
-            using (Form2 form2 = new Form2())
+            string projectDirectory = Directory.GetParent(workingDirectory).Parent.Parent.FullName + "/Data";
+            try
             {
-                if (form2.ShowDialog() == DialogResult.OK)
+                // Creating new connection object
+                using (SQLiteConnection con = new SQLiteConnection(@"data source =" + Path.Combine(projectDirectory, CheckCurrentFile())))
                 {
-                    selectedYearRange = (form2.YearRange().Item1, form2.YearRange().Item2);
-
-                    // plotting script location
-                    string scriptPath = Path.Combine(projectDirectory, "Scripts", "tempPlotter.exe");
-
-                    var process = new Process
+                    con.Open();
+                    Query = "SELECT DISTINCT MIN(year), MAX(year) FROM weather WHERE year IS NOT NULL AND year != '';";
+                    SQLiteCommand cmd = new SQLiteCommand(Query, con);
+                    using (SQLiteDataReader reader = cmd.ExecuteReader())
                     {
-                        StartInfo = new ProcessStartInfo
+                        if (reader.Read())
                         {
-                            FileName = scriptPath,
-                            Arguments = $"{CheckCurrentFile()} {selectedYearRange.Item1} {selectedYearRange.Item2}",
-                            RedirectStandardOutput = true,
-                            UseShellExecute = false,
-                            CreateNoWindow = true,
-                        }
-                    };
-                    process.StartInfo.RedirectStandardError = true;
-                    process.Start();
-                    string output = process.StandardOutput.ReadToEnd();
-                    string error = process.StandardError.ReadToEnd();
-                    process.WaitForExit();
-
-                    if (process.HasExited)
-                    {
-                        if (process.ExitCode == 0)
-                        {
-                            process.Kill();
-
-                            // process completed successfully
-                            // check the output and error variables for any messages
-                            // Create a new form to display the figure
-                            Form figureForm = new Form();
-                            PictureBox figureBox = new PictureBox();
-                            string figurePath = Path.Combine(projectDirectory, "img\\plotting", "plot.png");
-                            figureBox.Image = System.Drawing.Image.FromFile(figurePath);
-                            figureBox.Size = figureBox.Image.Size;
-                            figureForm.Controls.Add(figureBox);
-                            figureForm.FormClosed += new FormClosedEventHandler((s, e) => figureForm_FormClosed(s, e, figureBox));
-                            figureForm.WindowState = FormWindowState.Maximized;
-                            figureForm.Show();
+                            min = String.Format("{0}", reader["MIN(year)"]);
+                            max = String.Format("{0}", reader["MAX(year)"]);
+                            return (int.Parse(min), int.Parse(max));
                         }
                         else
-                        {
-                            // process completed with an error
-                            // check the output and error variables for any error messages
-                            MessageBox.Show(error);
+                        {   //default
+                            return (1920, 2023);
                         }
-                    }
-                    else
-                    {
-                        // process did not complete
-                        // check the output and error variables for any messages
-                        MessageBox.Show(error);
                     }
                 }
             }
-        }
-        private void figureForm_FormClosed(object sender, FormClosedEventArgs e, PictureBox figureBox)
-        {
-            // releases plot.png from the process/memory so that another dataset can be plotted
-            if (figureBox != null)
+            catch (FormatException)
             {
-                figureBox.Image.Dispose();
-                figureBox.Image = null;
+                return (1920, 2023);
             }
-            GC.Collect();
         }
         private void dataGridView_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
 
@@ -1121,7 +1082,7 @@ namespace Project_2
                     break;
                 case 4:
                     //KeyPress event for date column 
-                    string date = "0123456789/" + (char)8 + (char)13 + (char)32;
+                    string date = "0123456789-" + (char)8 + (char)13 + (char)32;
                     if (!date.Contains(e.KeyChar))
                     {
                         MessageBox.Show("Only numbers and slashes allowed");
@@ -1184,14 +1145,10 @@ namespace Project_2
             ////Get all row changes from embedded DataTable of DataGridView's DataSource
             foreach (DataGridViewRow row in dataGridView1.Rows)
             {
+
                 // Disable readonly temporarily so that the region can be set if the user edits the "State" column
                 datatable.Columns[3].ReadOnly = false; // region
 
-                // Get the last row edited
-                //int lastRowEdited = dataGridView1.CurrentCell.RowIndex;
-                double temp;
-
-                // Check the last row edited for errors
                 // Change city to titlecase for SQL query and formatting
                 string city = dataGridView1.Rows[row.Index].Cells["City"].Value.ToString();
                 city = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(city);
@@ -1204,8 +1161,8 @@ namespace Project_2
                 string tempString = dataGridView1.Rows[row.Index].Cells["Temperature"].Value.ToString();
                 string date = dataGridView1.Rows[row.Index].Cells["Date"].Value.ToString();
 
-                // Regex for mm/dd//yyyy
-                string pattern = @"^((((0[13578])|([13578])|(1[02]))[\/](([1-9])|([0-2][0-9])|(3[01])))|(((0[469])|([469])|(11))[\/](([1-9])|([0-2][0-9])|(30)))|((2|02)[\/](([1-9])|([0-2][0-9]))))[\/]\d{4}$|^\d{4}$";
+                // Regex for yyyy-MM-dd
+                string pattern = @"^\d{4}-\d{2}-\d{2}$";
                 string abbreviation = "St.";
                 if (city.Contains(abbreviation))
                 {
@@ -1214,18 +1171,20 @@ namespace Project_2
                     {
                         dataGridView1.Rows[row.Index].ErrorText = "Location could not be verified";
                         dataGridView1.ReadOnly = false;
+                        valid = false;
                     }
                     else if (date == null || !System.Text.RegularExpressions.Regex.IsMatch(date, pattern))
                     {
-                        dataGridView1.Rows[row.Index].ErrorText = "Date must be in mm/dd/yyyy format";
+                        dataGridView1.Rows[row.Index].ErrorText = "Date must be in YYYY-MM-DD format";
                         dataGridView1.ReadOnly = false;
+                        valid = false;
                     }
-                    else if (!double.TryParse(tempString, out temp) || temp < -70 || temp > 140)
+                    else if (Double.Parse(tempString) < -70 || Double.Parse(tempString) > 140)
                     {
-                        int lastRowEdited = dataGridView1.CurrentCell.RowIndex;
-                        dataGridView1.Rows[lastRowEdited].Cells["Temperature"].Value = 0.00;
+
                         dataGridView1.Rows[row.Index].ErrorText = "Temperature must be between -70 & 140";
                         dataGridView1.ReadOnly = false;
+                        valid = false;
                     }
                     else
                     {
@@ -1233,24 +1192,25 @@ namespace Project_2
                         valid = true;
                     }
                 }
-                else 
+                else
                 {
                     if (VerifyLocation(city, state) == false)
                     {
                         dataGridView1.Rows[row.Index].ErrorText = "Location could not be verified";
                         dataGridView1.ReadOnly = false;
+                        valid = false;
                     }
                     else if (date == null || !System.Text.RegularExpressions.Regex.IsMatch(date, pattern))
                     {
-                        dataGridView1.Rows[row.Index].ErrorText = "Date must be in mm/dd/yyyy format";
+                        dataGridView1.Rows[row.Index].ErrorText = "Date must be in YYYY-MM-DD format";
                         dataGridView1.ReadOnly = false;
+                        valid = false;
                     }
-                    else if (!double.TryParse(tempString, out temp) || temp < -70 || temp > 140)
+                    else if (Double.Parse(tempString) < -70 || Double.Parse(tempString) > 140)
                     {
-                        int lastRowEdited = dataGridView1.CurrentCell.RowIndex;
-                        dataGridView1.Rows[lastRowEdited].Cells["Temperature"].Value = 0.00;
                         dataGridView1.Rows[row.Index].ErrorText = "Temperature must be between -70 & 140";
                         dataGridView1.ReadOnly = false;
+                        valid = false;
                     }
                     else
                     {
@@ -1279,31 +1239,12 @@ namespace Project_2
                 dataGridView1.EditMode = DataGridViewEditMode.EditProgrammatically;
                 dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
             }
-            else
+            else if (RowValidated() == false)
             {
+                //MessageBox.Show("False");
                 saveButton.Visible = true;
                 dataGridView1.ReadOnly = false;
             }
-        }
-
-        private void removeAllButton_Click(object sender, EventArgs e)
-        {
-            using (con = new SQLiteConnection(@"data source =" + CheckCurrentFile()))
-            {
-                string deleteSql = "DELETE FROM weather;";
-                con.Open();
-                // Create a new SqlCommand object with the DELETE statement and the connection
-                using (SQLiteCommand deleteCommand = new SQLiteCommand(deleteSql, con))
-                {
-                    deleteCommand.ExecuteNonQuery();
-                }
-            }
-            // mark the row as deleted
-            // accept changes to remove the deleted rows
-            datatable.AcceptChanges();
-            adapter.Update(datatable);
-            ReloadAVGTextBoxes();
-            LoadData(CheckCurrentFile());
         }
         // Resets control and textbox state after mouse-click outside of them
         private void LightReset()
@@ -1317,6 +1258,24 @@ namespace Project_2
         private void WeatherForm_MouseClick(object sender, MouseEventArgs e)
         {
             LightReset();
+        }
+
+        private void filterBox_Click(object sender, EventArgs e)
+        {
+            using Form3 form3 = new Form3();
+            if (form3.ShowDialog() == DialogResult.OK)
+            {
+                filteredDataTable = form3.AdvancedFilter();
+                DV = new DataView(filteredDataTable);
+                dataGridView1.DataSource = DV.ToTable();
+                dataGridView1.SelectAll();
+                form3.Close();
+            }
+        }
+        private void moreButton_Click(object sender, EventArgs e)
+        {
+            using Form4 form4 = new Form4();
+            form4.ShowDialog();
         }
     }
 }

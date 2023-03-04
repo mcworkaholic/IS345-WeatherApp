@@ -34,11 +34,13 @@
             this.beginLabel = new System.Windows.Forms.Label();
             this.cancelButton = new System.Windows.Forms.Button();
             this.toLabel = new System.Windows.Forms.Label();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // okButton
             // 
-            this.okButton.Location = new System.Drawing.Point(201, 110);
+            this.okButton.Location = new System.Drawing.Point(213, 8);
             this.okButton.Name = "okButton";
             this.okButton.Size = new System.Drawing.Size(75, 23);
             this.okButton.TabIndex = 0;
@@ -75,7 +77,7 @@
             // 
             // cancelButton
             // 
-            this.cancelButton.Location = new System.Drawing.Point(282, 110);
+            this.cancelButton.Location = new System.Drawing.Point(290, 8);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(75, 23);
             this.cancelButton.TabIndex = 5;
@@ -92,23 +94,32 @@
             this.toLabel.TabIndex = 6;
             this.toLabel.Text = "To:";
             // 
+            // panel1
+            // 
+            this.panel1.BackColor = System.Drawing.Color.Gainsboro;
+            this.panel1.Controls.Add(this.okButton);
+            this.panel1.Controls.Add(this.cancelButton);
+            this.panel1.Location = new System.Drawing.Point(-4, 107);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(378, 46);
+            this.panel1.TabIndex = 7;
+            // 
             // Form2
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(369, 145);
-            this.ControlBox = false;
+            this.Controls.Add(this.panel1);
             this.Controls.Add(this.toLabel);
-            this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.beginLabel);
             this.Controls.Add(this.beginBox);
             this.Controls.Add(this.endBox);
-            this.Controls.Add(this.okButton);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Name = "Form2";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Please Select a Range";
             this.Load += new System.EventHandler(this.Form2_Load);
+            this.panel1.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -122,5 +133,6 @@
         private Label beginLabel;
         private Button cancelButton;
         private Label toLabel;
+        private Panel panel1;
     }
 }

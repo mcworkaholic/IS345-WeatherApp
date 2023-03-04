@@ -26,13 +26,13 @@ def plot(filename, begin_year, end_year):
         application_path = os.path.dirname(os.path.abspath(__file__))
 
     con = sqlite3.connect(filename)
-    sql = """SELECT region, date, year, month, temp, AVG(temp) FROM weather WHERE year >= ? AND year <= ? GROUP BY region, year, month"""
+    sql = """SELECT region, date_utc, year, month, temp, AVG(temp) FROM weather WHERE year >= ? AND year <= ? GROUP BY region, year, month"""
 
     # Read the data from the local database into a Pandas DataFrame with the commandline arguments
     data = pd.read_sql_query(sql, con, params=[begin_year, end_year])
-    data['date'] = pd.to_datetime(data['date'], format='%m/%d/%Y')
+    data['date_utc'] = pd.to_datetime(data['date_utc'])
     data['temp'] = pd.to_numeric(data['temp'], errors='coerce')
-    data = data.set_index('date')
+    data = data.set_index('date_utc')
     data = data.sort_index()
     data = data.interpolate()
     
@@ -56,9 +56,9 @@ def plot(filename, begin_year, end_year):
         except ValueError:
             pass
     
-    plt.title("Monthly Max Temperature By Region")
+    plt.title("Temperature By Region")
     plt.xlabel('Year')
-    plt.ylabel('Monthly Max Temperature')
+    plt.ylabel('Temperature')
     plt.legend(bbox_to_anchor=(1.01, -0.10), loc='lower right')
     plt.tight_layout()
     plt.savefig(path_to_img)

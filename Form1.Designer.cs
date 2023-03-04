@@ -74,17 +74,16 @@
             this.refreshBox2 = new System.Windows.Forms.PictureBox();
             this.resetButton = new System.Windows.Forms.Button();
             this.cancelButton = new System.Windows.Forms.Button();
-            this.bulkInsertButton = new System.Windows.Forms.Button();
             this.blankBox = new System.Windows.Forms.PictureBox();
             this.noDataLabel = new System.Windows.Forms.Label();
             this.confirmButton = new System.Windows.Forms.Button();
-            this.plotButton = new System.Windows.Forms.Button();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.removeSelectedButton = new System.Windows.Forms.Button();
             this.toolTip2 = new System.Windows.Forms.ToolTip(this.components);
             this.saveButton = new System.Windows.Forms.Button();
             this.copyrightLabel = new System.Windows.Forms.Label();
-            this.removeAllButton = new System.Windows.Forms.Button();
+            this.filterBox = new System.Windows.Forms.PictureBox();
+            this.moreButton = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.weatherBox.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.errorIcon)).BeginInit();
@@ -93,6 +92,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.iconBox)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.refreshBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.blankBox)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.filterBox)).BeginInit();
             this.SuspendLayout();
             // 
             // dataGridView1
@@ -118,13 +118,13 @@
             this.searchTextBox.Size = new System.Drawing.Size(90, 23);
             this.searchTextBox.TabIndex = 1;
             this.searchTextBox.TabStop = false;
-            this.toolTip1.SetToolTip(this.searchTextBox, "Filter by city, state, or region");
+            this.toolTip1.SetToolTip(this.searchTextBox, "Filter by city");
             this.searchTextBox.Visible = false;
             this.searchTextBox.TextChanged += new System.EventHandler(this.searchTextBox_TextChanged);
             // 
             // removeButton
             // 
-            this.removeButton.Location = new System.Drawing.Point(394, 232);
+            this.removeButton.Location = new System.Drawing.Point(229, 232);
             this.removeButton.Name = "removeButton";
             this.removeButton.Size = new System.Drawing.Size(92, 23);
             this.removeButton.TabIndex = 3;
@@ -137,7 +137,7 @@
             // 
             this.editButton.CausesValidation = false;
             this.editButton.FlatAppearance.BorderSize = 0;
-            this.editButton.Location = new System.Drawing.Point(297, 232);
+            this.editButton.Location = new System.Drawing.Point(133, 232);
             this.editButton.Name = "editButton";
             this.editButton.Size = new System.Drawing.Size(91, 23);
             this.editButton.TabIndex = 4;
@@ -325,7 +325,7 @@
             this.stateBox.Location = new System.Drawing.Point(171, 67);
             this.stateBox.Name = "stateBox";
             this.stateBox.Size = new System.Drawing.Size(100, 23);
-            this.stateBox.TabIndex = 11;
+            this.stateBox.TabIndex = 2;
             // 
             // tempTextBox
             // 
@@ -346,7 +346,7 @@
             this.cityTextBox.Name = "cityTextBox";
             this.cityTextBox.ReadOnly = true;
             this.cityTextBox.Size = new System.Drawing.Size(100, 23);
-            this.cityTextBox.TabIndex = 0;
+            this.cityTextBox.TabIndex = 1;
             this.cityTextBox.TextChanged += new System.EventHandler(this.cityTextBox_TextChanged);
             // 
             // tempBox
@@ -586,7 +586,7 @@
             // 
             // cancelButton
             // 
-            this.cancelButton.Location = new System.Drawing.Point(492, 232);
+            this.cancelButton.Location = new System.Drawing.Point(327, 232);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(75, 23);
             this.cancelButton.TabIndex = 13;
@@ -595,18 +595,6 @@
             this.cancelButton.UseVisualStyleBackColor = true;
             this.cancelButton.Visible = false;
             this.cancelButton.Click += new System.EventHandler(this.cancelButton_Click);
-            // 
-            // bulkInsertButton
-            // 
-            this.bulkInsertButton.Location = new System.Drawing.Point(216, 232);
-            this.bulkInsertButton.Name = "bulkInsertButton";
-            this.bulkInsertButton.Size = new System.Drawing.Size(75, 23);
-            this.bulkInsertButton.TabIndex = 14;
-            this.bulkInsertButton.TabStop = false;
-            this.bulkInsertButton.Text = "Bulk ➕";
-            this.bulkInsertButton.UseVisualStyleBackColor = true;
-            this.bulkInsertButton.Visible = false;
-            this.bulkInsertButton.Click += new System.EventHandler(this.bulkInsertButton_Click);
             // 
             // blankBox
             // 
@@ -631,7 +619,7 @@
             // 
             // confirmButton
             // 
-            this.confirmButton.Location = new System.Drawing.Point(394, 232);
+            this.confirmButton.Location = new System.Drawing.Point(230, 232);
             this.confirmButton.Name = "confirmButton";
             this.confirmButton.Size = new System.Drawing.Size(92, 23);
             this.confirmButton.TabIndex = 12;
@@ -639,18 +627,6 @@
             this.confirmButton.UseVisualStyleBackColor = true;
             this.confirmButton.Visible = false;
             this.confirmButton.Click += new System.EventHandler(this.confirmButton_Click);
-            // 
-            // plotButton
-            // 
-            this.plotButton.Location = new System.Drawing.Point(493, 431);
-            this.plotButton.Name = "plotButton";
-            this.plotButton.Size = new System.Drawing.Size(75, 23);
-            this.plotButton.TabIndex = 17;
-            this.plotButton.TabStop = false;
-            this.plotButton.Text = "Plot 📈";
-            this.plotButton.UseVisualStyleBackColor = true;
-            this.plotButton.Visible = false;
-            this.plotButton.Click += new System.EventHandler(this.plotButton_Click);
             // 
             // timer1
             // 
@@ -671,7 +647,7 @@
             // 
             // saveButton
             // 
-            this.saveButton.Location = new System.Drawing.Point(297, 232);
+            this.saveButton.Location = new System.Drawing.Point(133, 232);
             this.saveButton.Name = "saveButton";
             this.saveButton.Size = new System.Drawing.Size(91, 23);
             this.saveButton.TabIndex = 19;
@@ -689,17 +665,29 @@
             this.copyrightLabel.TabIndex = 20;
             this.copyrightLabel.Text = "©️ Weston Evans Spring 2023";
             // 
-            // removeAllButton
+            // filterBox
             // 
-            this.removeAllButton.Location = new System.Drawing.Point(411, 431);
-            this.removeAllButton.Name = "removeAllButton";
-            this.removeAllButton.Size = new System.Drawing.Size(75, 23);
-            this.removeAllButton.TabIndex = 21;
-            this.removeAllButton.TabStop = false;
-            this.removeAllButton.Text = "Remove All";
-            this.removeAllButton.UseVisualStyleBackColor = true;
-            this.removeAllButton.Visible = false;
-            this.removeAllButton.Click += new System.EventHandler(this.removeAllButton_Click);
+            this.filterBox.BackColor = System.Drawing.Color.White;
+            this.filterBox.Image = ((System.Drawing.Image)(resources.GetObject("filterBox.Image")));
+            this.filterBox.Location = new System.Drawing.Point(91, 231);
+            this.filterBox.Name = "filterBox";
+            this.filterBox.Size = new System.Drawing.Size(10, 10);
+            this.filterBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.filterBox.TabIndex = 22;
+            this.filterBox.TabStop = false;
+            this.filterBox.Visible = false;
+            this.filterBox.Click += new System.EventHandler(this.filterBox_Click);
+            // 
+            // moreButton
+            // 
+            this.moreButton.Location = new System.Drawing.Point(492, 431);
+            this.moreButton.Name = "moreButton";
+            this.moreButton.Size = new System.Drawing.Size(75, 23);
+            this.moreButton.TabIndex = 23;
+            this.moreButton.Text = "More...";
+            this.moreButton.UseVisualStyleBackColor = true;
+            this.moreButton.Visible = false;
+            this.moreButton.Click += new System.EventHandler(this.moreButton_Click);
             // 
             // WeatherForm
             // 
@@ -708,15 +696,14 @@
             this.AutoValidate = System.Windows.Forms.AutoValidate.EnablePreventFocusChange;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(630, 521);
-            this.Controls.Add(this.removeAllButton);
+            this.Controls.Add(this.moreButton);
+            this.Controls.Add(this.filterBox);
             this.Controls.Add(this.copyrightLabel);
             this.Controls.Add(this.saveButton);
             this.Controls.Add(this.removeSelectedButton);
-            this.Controls.Add(this.plotButton);
             this.Controls.Add(this.confirmButton);
             this.Controls.Add(this.noDataLabel);
             this.Controls.Add(this.blankBox);
-            this.Controls.Add(this.bulkInsertButton);
             this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.resetButton);
             this.Controls.Add(this.refreshBox2);
@@ -746,6 +733,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.iconBox)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.refreshBox2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.blankBox)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.filterBox)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -788,18 +776,15 @@
         private Label regionLabel;
         private Button resetButton;
         private Button cancelButton;
-        private Button bulkInsertButton;
         private PictureBox blankBox;
         private Label noDataLabel;
         private Button confirmButton;
-        private Button plotButton;
         private System.Windows.Forms.Timer timer1;
         private Button removeSelectedButton;
         private PictureBox errorIcon;
         private ToolTip toolTip2;
         private Button saveButton;
         private Label copyrightLabel;
-        private Button removeAllButton;
         private Button getButton;
         private Button newButton;
         private Button sourceButton;
@@ -808,5 +793,7 @@
         private Panel panel;
         private Panel panel1;
         private Label tempLabel2;
+        private PictureBox filterBox;
+        private Button moreButton;
     }
 }

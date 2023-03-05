@@ -9,10 +9,9 @@
  * 
  * START: 
  * 
- * The user can either start by pressing "select source" to pick one of the provided databases 
- * or "new" to create an empty one to start adding in data. It is recommended to click 
- * "select source" and start with "weathersmall.db" for testing.
- * The user must then confirm whether or not they wish to open the selected database.
+ * 
+ * click "new" to create an empty database to start adding in data. 
+ * The user must then confirm whether or not they wish to open the selected database, and then name it.
  * 
  * INSERTION: 
  * 
@@ -20,11 +19,11 @@
  * and then pick a date. At this point the user can either click clear to reset all textBox values 
  * or the "➕" button to add the record.
  * 
- * For BULK insertion, click on the "Bulk ➕" button and pick from the given .csv files 
- * that are already formatted for insertion. 
+ * found after clicking on "more" button. For BULK insertion, click on the "Bulk ➕" button and pick from the given .csv files 
+ * that are already formatted for insertion for testing. Because they are in .csv the values may be incorrect in excel. Make sure date is in format YYYY-MM-DD.
  * 
  * It is recommended to start from new when doing a bulk insert so you can see exactly what values were inserted. 
- * "weather.csv" is the default CSV file.
+ * "baltimore.csv" is the default CSV starting file for testing bulk insertion.
  * 
  * --------------------------------------MORE OPTIONS----------------------------------------------------------------------
  * 
@@ -55,16 +54,16 @@
  * To REMOVE multiple records the ctrl button must be held while clicking, 
  * and when the user is satisfied they must click on the CONFIRM button to commit their changes.
  * 
- * REMOVE ALL: removes all records in the current database but does not delete the database. 
+ * REMOVE ALL: found after clicking on the "more" button. Removes all records in the current database but does not delete the database. 
  * DO NOT click on the red ❌ as you search, the functionality is broken for now.
  * 
- * SEARCH: To filter the DGV just start typing in the search text box. It filters by city, state, or region.
+ * SEARCH: To filter the DGV just start typing in the search text box. It filters by city now.
  * 
  * PLOT:
  * 
- * Please see the comments by the plotButtonClick event handler for specifics on getting it running, 
- * your luck may vary.
- * Once working, the user just has to select a range of values for visualization.
+ * Will not work unless all weather files are cleaned and added. Would take at least 1 full day.
+ * 
+ * MORE (button): button gives more options and a full datagridview of all fields. Options include showing the record distribution, plotting, bulk insertion, removing all records, and filtering. To remove one or many records, click anywhere in the datagridview, select a row and click on the red "X" that appears to remove a record. Holding ctrl button allows you to delete multiple records after clickicking red "X" buttton.
  * 
  * **/
 
